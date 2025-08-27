@@ -8,7 +8,6 @@
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
     <style>
-        /* CSS is the same as the previous version */
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #000; font-family: 'Press Start 2P', cursive; }
         #game-container { position: relative; width: 100%; height: 100%; }
         .ui-element { position: absolute; z-index: 10; color: #fff; text-align: center; width: 100%; }
@@ -21,7 +20,15 @@
         #puzzle-input-container { display: none; position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); }
         button { background-color: #555; color: #fff; border: 3px solid #fff; padding: 15px 25px; font-family: 'Press Start 2P', cursive; cursor: pointer; }
         input { font-family: 'Press Start 2P', cursive; padding: 10px; font-size: 1em; }
-        #ar-scene { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; display: none; }
+        
+        /* CHANGED: Use visibility instead of display to hide the AR scene */
+        #ar-scene {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 1;
+            visibility: hidden; /* Hide without removing from layout */
+        }
     </style>
 </head>
 <body>
@@ -66,6 +73,7 @@
             const puzzleInputContainer = document.getElementById('puzzle-input-container');
             const puzzleInput = document.getElementById('puzzle-input');
             const submitCodeButton = document.getElementById('submit-code-button');
+            const arSystem = arScene.systems["mindar-image-system"];
             
             const SECRET_CODE = "ORION";
 
@@ -79,19 +87,19 @@
             }
 
             activateArButton.addEventListener('click', () => {
-                const arSystem = arScene.systems["mindar-image-system"];
                 gameUi.style.display = 'none';
-                arScene.style.display = 'block';
+                // CHANGED: Use visibility to show the scene
+                arScene.style.visibility = 'visible';
                 arSystem.start();
             });
             
             const targetEntity = document.getElementById('target-entity');
             targetEntity.addEventListener("targetFound", event => {
-                const arSystem = arScene.systems["mindar-image-system"];
                 instructionText.textContent = "You found a secret code!";
                 
+                // CHANGED: Use visibility to hide the scene
                 gameUi.style.display = 'block';
-                arScene.style.display = 'none';
+                arScene.style.visibility = 'hidden';
                 arSystem.stop();
                 
                 arPrompt.style.display = 'none';
