@@ -8,33 +8,16 @@
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
     <style>
-        body, html {
-            margin: 0; padding: 0;
-            width: 100%; height: 100%;
-            overflow: hidden;
-            background-color: #000;
-            font-family: 'Press Start 2P', cursive;
-        }
-        /* The main container will hold the AR scene and the UI overlay */
-        #game-container {
-            position: relative;
-            width: 100%; height: 100%;
-        }
-        /* UI elements are now absolutely positioned over the AR scene */
-        .ui-overlay {
-            position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            z-index: 10;
-            display: none; /* Hidden by default until game starts */
-            pointer-events: none; /* Allows clicks to pass through to the AR scene if needed */
-        }
-        .ui-overlay > * {
-            pointer-events: all; /* Make child elements clickable */
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #000; font-family: 'Press Start 2P', cursive; }
+        #game-container { position: relative; width: 100%; height: 100%; }
+        .ui-element {
+            position: absolute; z-index: 10;
+            color: #fff; text-align: center;
+            width: 100%;
         }
         #start-screen {
             display: flex; flex-direction: column; justify-content: center; align-items: center;
-            width: 100%; height: 100%;
+            height: 100%;
             background: #222 url('https://res.cloudinary.com/dvf40x79k/image/upload/v1708645009/dungeon_tile_bg_y3j86m.png') repeat;
         }
         .start-box {
@@ -44,74 +27,116 @@
             border-image-source: url('data:image/svg+xml;utf8,<?xml version="1.0" encoding="UTF-8" ?><svg version="1.1" width="9" height="9" xmlns="http://www.w3.org/2000/svg"><path d="M3,0 H6 V3 H9 V6 H6 V9 H3 V6 H0 V3 H3 Z" fill-rule="evenodd" fill="white" /></svg>');
             image-rendering: pixelated;
         }
-        /* Other UI styles (map, text box, etc.) are simplified for the overlay */
+        #game-ui { display: none; height: 100%; pointer-events: none; }
+        #game-ui > * { pointer-events: all; }
+
         #instruction-text {
             position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
             width: 90%; max-width: 400px; background-color: rgba(0,0,0,0.8);
-            border: 3px solid #fff; padding: 15px; color: #fff; text-align: center;
-            font-size: 0.8em; line-height: 1.5;
+            border: 3px solid #fff; padding: 15px; font-size: 0.8em;
         }
+        #ar-prompt {
+             position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%);
+        }
+        #puzzle-input-container {
+            display: none; /* Initially hide the input box */
+            position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%);
+        }
+        button { background-color: #555; color: #fff; border: 3px solid #fff; padding: 15px 25px; font-family: 'Press Start 2P', cursive; cursor: pointer; }
+        input { font-family: 'Press Start 2P', cursive; padding: 10px; font-size: 1em; }
+        #ar-scene { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; display: none; }
     </style>
 </head>
 <body>
     <div id="game-container">
-        <div id="start-screen">
+        <div id="start-screen" class="ui-element">
             <div class="start-box">
                 <h1>Psyde Quest</h1>
-                <p>An adventure awaits. Allow camera access to begin.</p>
-                <button id="start-button">Activate Seeker Lens</button>
+                <p>An adventure awaits...</p>
+                <button id="start-button">Begin</button>
             </div>
         </div>
 
-        <div id="game-ui" class="ui-overlay">
-            <p id="instruction-text">Find the hidden rune...</p>
+        <div id="game-ui" class="ui-element">
+            <p id="instruction-text">A hidden message is nearby...</p>
+            <div id="ar-prompt">
+                <button id="activate-ar-button">Activate Camera</button>
+            </div>
+            <div id="puzzle-input-container">
+                <input type="text" id="puzzle-input" placeholder="Enter Code">
+                <button id="submit-code-button">Submit</button>
+            </div>
         </div>
 
-        <a-scene id="ar-scene" mindar-image="imageTargetSrc: https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.mind; autoStart: false" embedded color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+        <a-scene id="ar-scene" mindar-image="imageTargetSrc: https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.mind; autoStart: false; uiScanning: #none;" embedded>
             <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-            
             <a-entity id="target-entity" mindar-image-target="targetIndex: 0">
-                <a-plane color="yellow" opaciy="0.5" position="0 0 0" height="0.55" width="1" rotation="0 0 0"></a-plane>
+                <a-text value="ORION" color="yellow" align="center" width="2" position="0 0.6 0" rotation="-90 0 0"></a-text>
             </a-entity>
         </a-scene>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // --- DOM Elements ---
             const startScreen = document.getElementById('start-screen');
             const startButton = document.getElementById('start-button');
             const gameUi = document.getElementById('game-ui');
             const instructionText = document.getElementById('instruction-text');
             const arScene = document.getElementById('ar-scene');
-            const targetEntity = document.getElementById('target-entity');
+            const arPrompt = document.getElementById('ar-prompt');
+            const activateArButton = document.getElementById('activate-ar-button');
+            const puzzleInputContainer = document.getElementById('puzzle-input-container');
+            const puzzleInput = document.getElementById('puzzle-input');
+            const submitCodeButton = document.getElementById('submit-code-button');
+            const arSystem = arScene.systems["mindar-image-system"];
+            
+            const SECRET_CODE = "ORION";
 
-            let found = false;
+            // --- Game Flow ---
+            startButton.addEventListener('click', startGame);
 
-            startButton.addEventListener('click', () => {
+            function startGame() {
                 startScreen.style.display = 'none';
                 gameUi.style.display = 'block';
-                
-                // Start the AR engine
-                const sceneEl = document.querySelector('a-scene');
-                const arSystem = sceneEl.systems["mindar-image-system"];
+                instructionText.textContent = "A hidden message is nearby. Find the rune to reveal it.";
+            }
+
+            activateArButton.addEventListener('click', () => {
+                // Hide the main UI and show the camera view
+                gameUi.style.display = 'none';
+                arScene.style.display = 'block';
                 arSystem.start(); // This will prompt for camera access
             });
-
+            
             // Listen for when the AR target is found
+            const targetEntity = document.getElementById('target-entity');
             targetEntity.addEventListener("targetFound", event => {
-                if (found) return; // Only trigger once
-                found = true;
+                instructionText.textContent = "You found a secret code!";
                 
-                console.log("Rune Found!");
-                instructionText.textContent = "RUNE CAPTURED!";
-                if (navigator.vibrate) navigator.vibrate(200);
-
-                // Here we would add logic to advance to the next quest stage
+                // Show the UI again and hide the camera
+                gameUi.style.display = 'block';
+                arScene.style.display = 'none';
+                arSystem.stop();
+                
+                // Show the puzzle input field
+                arPrompt.style.display = 'none';
+                puzzleInputContainer.style.display = 'block';
+                puzzleInput.focus();
             });
 
-            // Optional: Listen for when the target is lost
-            targetEntity.addEventListener("targetLost", event => {
-                // You could add logic here if needed, but for a simple capture we don't need it.
+            submitCodeButton.addEventListener('click', () => {
+                if (puzzleInput.value.toUpperCase() === SECRET_CODE) {
+                    alert("Correct! You've unlocked the next stage!");
+                    // Reset UI for the next beacon hunt
+                    puzzleInputContainer.style.display = 'none';
+                    puzzleInput.value = '';
+                    instructionText.textContent = "Find the next rune...";
+                    arPrompt.style.display = 'block';
+                } else {
+                    alert("Incorrect code. Try again!");
+                    puzzleInput.value = '';
+                }
             });
         });
     </script>
