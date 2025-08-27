@@ -6,44 +6,23 @@
     <title>Psyde Quest</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
-        /* --- General Styling --- */
         body, html {
-            background-color: #000;
-            color: #fff;
-            font-family: 'Press Start 2P', cursive;
-            margin: 0; padding: 0;
-            height: 100%; width: 100%;
-            overflow: hidden;
-            text-align: center;
+            background-color: #000; color: #fff; font-family: 'Press Start 2P', cursive;
+            margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; text-align: center;
         }
 
-        /* --- Game Container --- */
         #game-container {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
             height: 100%; width: 100%;
             background: #222 url('https://res.cloudinary.com/dvf40x79k/image/upload/v1708645009/dungeon_tile_bg_y3j86m.png') repeat;
             position: relative;
         }
         
-        /* --- Screen Styling --- */
         .screen {
-            display: none; 
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            width: 90%; max-width: 400px;
-            background-color: rgba(0,0,0,0.7);
-            padding: 20px;
-            z-index: 10;
-            
-            /* NEW: Pixelated NES-style border */
-            border: 20px solid;
-            border-image-slice: 3;
-            border-image-width: 20px;
-            border-image-repeat: stretch;
+            display: none; flex-direction: column; justify-content: center; align-items: center;
+            width: 90%; max-width: 400px; background-color: rgba(0,0,0,0.7);
+            padding: 20px; z-index: 10;
+            border: 20px solid; border-image-slice: 3; border-image-width: 20px; border-image-repeat: stretch;
             border-image-source: url('data:image/svg+xml;utf8,<?xml version="1.0" encoding="UTF-8" ?><svg version="1.1" width="9" height="9" xmlns="http://www.w3.org/2000/svg"><path d="M3,0 H6 V3 H9 V6 H6 V9 H3 V6 H0 V3 H3 Z" fill-rule="evenodd" fill="white" /></svg>');
             image-rendering: pixelated;
         }
@@ -60,75 +39,47 @@
             position: absolute;
             top: 20px; left: 20px;
             width: 120px; height: 120px;
-            border-radius: 50%;
             background-color: rgba(0,0,0,0.8);
+            border-radius: 50%;
             z-index: 100;
-            
-            /* NEW: Pixelated border for the map */
-            border: 12px solid;
-            border-image-slice: 3;
-            border-image-width: 12px;
-            border-image-repeat: stretch;
-            border-image-source: url('data:image/svg+xml;utf8,<?xml version="1.0" encoding="UTF-8" ?><svg version="1.1" width="9" height="9" xmlns="http://www.w3.org/2000/svg"><path d="M3,0 H6 V3 H9 V6 H6 V9 H3 V6 H0 V3 H3 Z" fill-rule="evenodd" fill="white" /></svg>');
+            /* NEW: Replaced border-image with a background SVG for a perfect circle */
+            background-image: url('data:image/svg+xml;utf8,<?xml version="1.0" encoding="UTF-8" ?><svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" stroke="white" stroke-width="4"/><g stroke="white" stroke-width="4" fill="none"><path d="M20,20 L40,20 L40,40 L20,40Z M80,20 L100,20 L100,40 L80,40Z M20,80 L40,80 L40,100 L20,100Z M80,80 L100,80 L100,100 L80,100Z" /></g></svg>');
             image-rendering: pixelated;
         }
         
         #player-arrow {
-            position: absolute;
-            top: 50%; left: 50%;
-            width: 0; height: 0;
-            /* NEW: More distinct arrow shape */
-            border-left: 8px solid transparent;
-            border-right: 8px solid transparent;
-            border-bottom: 24px solid #FFFFFF;
-            transform: translate(-50%, -60%); /* Adjusted for new shape */
-            transition: transform 0.2s linear;
+            position: absolute; top: 50%; left: 50%; width: 0; height: 0;
+            border-left: 8px solid transparent; border-right: 8px solid transparent; border-bottom: 24px solid #FFFFFF;
+            transform: translate(-50%, -60%); transition: transform 0.2s linear;
         }
         
         #beacon-dot {
-            position: absolute;
-            width: 15px; height: 15px;
-            background-color: #FF0000;
-            border-radius: 50%;
-            border: 2px solid #fff;
+            position: absolute; width: 15px; height: 15px; background-color: #FF0000;
+            border-radius: 50%; border: 2px solid #fff;
         }
 
-        /* --- Proximity Ring Styling --- */
         #ring-container {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 250px; height: 250px;
-            border: 5px solid #555;
-            border-radius: 50%;
-            transition: all 0.5s ease;
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 250px; height: 250px; border: 5px solid #555; border-radius: 50%; transition: all 0.5s ease;
         }
         
         #ring-container.active { border-color: #FFFF00; box-shadow: 0 0 20px #FFFF00; animation: pulse 1.5s infinite; }
-        @keyframes pulse { /* Pulse animation remains the same */ }
+        @keyframes pulse { /* ... */ }
 
-        /* --- NEW: Instruction Text Box --- */
         #instruction-text {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 90%; max-width: 400px;
-            background-color: rgba(0,0,0,0.8);
-            border: 3px solid #fff;
-            padding: 15px;
-            z-index: 100;
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 400px; background-color: rgba(0,0,0,0.8);
+            border: 3px solid #fff; padding: 15px; z-index: 100;
         }
-
     </style>
 </head>
 <body>
-
     <div id="game-container">
         <div id="start-screen" class="screen">
             <h1>Psyde Quest</h1>
-            <p>An adventure awaits. Allow permissions to begin your quest.</p>
+            <p id="start-prompt">An adventure awaits. Allow permissions to begin your quest.</p>
             <button id="start-button">Begin</button>
+            <p style="font-size: 0.6em; margin-top: 20px;">(This game does not collect or store any personal data)</p>
         </div>
 
         <div id="game-screen" class="screen">
@@ -143,31 +94,42 @@
 
     <script>
         // --- DOM Elements ---
+        const startPrompt = document.getElementById('start-prompt');
+        // (Other elements are the same)
         const startScreen = document.getElementById('start-screen');
         const gameScreen = document.getElementById('game-screen');
         const startButton = document.getElementById('start-button');
         const playerArrow = document.getElementById('player-arrow');
         const beaconDot = document.getElementById('beacon-dot');
         const ringContainer = document.getElementById('ring-container');
-        const instructionText = document.getElementById('instruction-text'); // New element
+        const instructionText = document.getElementById('instruction-text');
 
         // --- Game State & Beacons ---
         const targetBeacon = { lat: 32.5362, lon: -97.3239 }; 
         const ACTIVATION_DISTANCE_METERS = 10; 
+        let previousDistance = Infinity; // For warmer/colder logic
 
-        // --- Event Listener ---
+        // --- Initial Load ---
+        window.addEventListener('load', checkPermissionsOnLoad);
         startButton.addEventListener('click', requestPermissionsAndStart);
 
         // --- Core Functions ---
+        async function checkPermissionsOnLoad() {
+            if (navigator.permissions) {
+                const geoPermission = await navigator.permissions.query({ name: 'geolocation' });
+                if (geoPermission.state === 'granted') {
+                    startPrompt.textContent = "Welcome back! Ready for another quest?";
+                }
+            }
+        }
+
         async function requestPermissionsAndStart() {
             // (Permission logic is the same)
             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                try {
-                    const permissionState = await DeviceOrientationEvent.requestPermission();
-                    if (permissionState !== 'granted') {
-                        alert("Compass access is required. Please refresh and grant permission."); return;
-                    }
-                } catch (error) { console.warn("Compass permission request failed.", error); }
+                const permissionState = await DeviceOrientationEvent.requestPermission();
+                if (permissionState !== 'granted') {
+                    alert("Compass access is required. Please refresh and grant permission."); return;
+                }
             }
             if (!('geolocation' in navigator)) { alert("Geolocation is not supported."); return; }
             navigator.geolocation.getCurrentPosition(
@@ -180,13 +142,12 @@
             startScreen.style.display = 'none';
             gameScreen.style.display = 'block';
             
-            updateInstructionText("Follow the red dot on your map."); // Initial instruction
+            updateInstructionText("Follow the red dot on your map.");
             
             window.addEventListener('deviceorientation', handleOrientation);
             navigator.geolocation.watchPosition(handlePositionUpdate);
         }
 
-        // --- NEW: Instruction Update Function ---
         function updateInstructionText(message) {
             instructionText.textContent = message;
         }
@@ -202,13 +163,19 @@
             const playerLon = position.coords.longitude;
             const distance = getDistance(playerLat, playerLon, targetBeacon.lat, targetBeacon.lon);
             
+            // --- NEW: Warmer/Colder Logic ---
             if (distance <= ACTIVATION_DISTANCE_METERS) {
                 ringContainer.classList.add('active');
-                updateInstructionText("You're close! Get ready to scan..."); // New instruction
+                updateInstructionText("You're close! Get ready to scan...");
             } else {
                 ringContainer.classList.remove('active');
-                updateInstructionText("Follow the red dot on your map."); // Revert instruction
+                if (distance < previousDistance) {
+                    updateInstructionText("You're getting warmer...");
+                } else if (distance > previousDistance) {
+                    updateInstructionText("Getting colder... Turn back!");
+                }
             }
+            previousDistance = distance; // Update distance for the next check
             
             updateBeaconDot(playerLat, playerLon, targetBeacon.lat, targetBeacon.lon);
         }
@@ -216,26 +183,25 @@
         function updateBeaconDot(playerLat, playerLon, beaconLat, beaconLon) {
             const bearing = getBearing(playerLat, playerLon, beaconLat, beaconLon);
             const angle = bearing * (Math.PI / 180);
-            const mapRadius = 48; // Adjusted for new border
+            const mapRadius = 50; // Center point for the dot
             const x = mapRadius * Math.sin(angle);
             const y = -mapRadius * Math.cos(angle);
-            beaconDot.style.left = `calc(50% + ${x}px - 7.5px)`; // Center the dot
+            beaconDot.style.left = `calc(50% + ${x}px - 7.5px)`;
             beaconDot.style.top = `calc(50% + ${y}px - 7.5px)`;
         }
 
         // --- Helper Functions for GPS calculations (remain the same) ---
-        function getDistance(lat1, lon1, lat2, lon2) { /* ... no changes ... */
+        function getDistance(lat1, lon1, lat2, lon2) {
             const R = 6371e3; const φ1 = lat1 * Math.PI/180; const φ2 = lat2 * Math.PI/180;
             const Δφ = (lat2-lat1) * Math.PI/180; const Δλ = (lon2-lon1) * Math.PI/180;
             const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2);
             const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); return R * c;
         }
-        function getBearing(lat1, lon1, lat2, lon2){ /* ... no changes ... */
+        function getBearing(lat1, lon1, lat2, lon2){
              const φ1 = lat1 * Math.PI/180; const φ2 = lat2 * Math.PI/180; const λ1 = lon1 * Math.PI/180; const λ2 = lon2 * Math.PI/180;
              const y = Math.sin(λ2-λ1) * Math.cos(φ2); const x = Math.cos(φ1)*Math.sin(φ2) - Math.sin(φ1)*Math.cos(φ2)*Math.cos(λ2-λ1);
              const θ = Math.atan2(y, x); return (θ*180/Math.PI + 360) % 360;
         }
-
     </script>
 </body>
 </html>
