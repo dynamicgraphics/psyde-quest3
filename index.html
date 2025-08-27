@@ -8,16 +8,6 @@
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
     <style>
-        /* CSS is the same as the last version, with one addition for fading text */
-        #instruction-text {
-            /* ... existing styles ... */
-            opacity: 1;
-            transition: opacity 0.5s ease-in-out;
-        }
-        #instruction-text.fade-out {
-            opacity: 0;
-        }
-        /* All other CSS is unchanged */
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #000; font-family: 'Press Start 2P', cursive; }
         #game-container { position: relative; width: 100%; height: 100%; background: #222 url('https://res.cloudinary.com/dvf40x79k/image/upload/v1708645009/dungeon_tile_bg_y3j86m.png') repeat; }
         .ui-element { position: absolute; z-index: 10; color: #fff; text-align: center; width: 100%; }
@@ -31,6 +21,16 @@
         #ring-container { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 250px; height: 250px; border: 5px solid #555; border-radius: 50%; transition: all 0.5s ease; }
         #ring-container.active { border-color: #FFFF00; box-shadow: 0 0 20px #FFFF00; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { transform: translate(-50%,-50%) scale(0.95); } 70% { transform: translate(-50%,-50%) scale(1); } 100% { transform: translate(-50%,-50%) scale(0.95); } }
+        #instruction-text {
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 400px; background-color: rgba(0,0,0,0.8);
+            border: 3px solid #fff; padding: 15px; font-size: 0.8em;
+            opacity: 1;
+            transition: opacity 0.5s ease-in-out;
+        }
+        #instruction-text.fade-out {
+            opacity: 0;
+        }
         .hidden-by-ar { display: none; }
         #ar-controls { display: none; position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); }
         #puzzle-input-container { display: none; position: absolute; bottom: 80px; left: 50%; transform: translateX(-50%); }
@@ -41,70 +41,96 @@
 </head>
 <body>
     <div id="game-container">
+        <div id="start-screen" class="ui-element">
+            <div class="start-box">
+                <h1>Psyde Quest</h1>
+                <p>An adventure awaits...</p>
+                <button id="start-button">Begin</button>
+            </div>
         </div>
+
+        <div id="game-ui" class="ui-element">
+            <div id="mini-map-container">
+                <div id="player-arrow"></div>
+                <div id="beacon-dot"></div>
+            </div>
+            <div id="ring-container"></div>
+            <p id="instruction-text">Initializing...</p>
+            <div id="ar-controls">
+                <button id="activate-ar-button">Activate Camera</button>
+            </div>
+            <div id="puzzle-input-container">
+                <input type="text" id="puzzle-input" placeholder="Enter Code">
+                <button id="submit-code-button">Submit</button>
+            </div>
+        </div>
+
+        <a-scene id="ar-scene" mindar-image="imageTargetSrc: https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.mind; autoStart: false; uiScanning: #none;" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+            <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+            <a-entity id="target-entity" mindar-image-target="targetIndex: 0">
+                <a-text value="ORION" color="yellow" align="center" width="2" position="0 0.6 0" rotation="-90 0 0"></a-text>
+            </a-entity>
+        </a-scene>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            const startScreen = document.getElementById('start-screen');
+            const startButton = document.getElementById('start-button');
+            const gameUi = document.getElementById('game-ui');
             const instructionText = document.getElementById('instruction-text');
+            const arScene = document.getElementById('ar-scene');
+            const arControls = document.getElementById('ar-controls');
+            const activateArButton = document.getElementById('activate-ar-button');
+            const puzzleInputContainer = document.getElementById('puzzle-input-container');
+            const puzzleInput = document.getElementById('puzzle-input');
+            const submitCodeButton = document.getElementById('submit-code-button');
+            const miniMap = document.getElementById('mini-map-container');
+            const ringContainer = document.getElementById('ring-container');
             const playerArrow = document.getElementById('player-arrow');
             const beaconDot = document.getElementById('beacon-dot');
-            // Other element selectors are unchanged
 
+            const SECRET_CODE = "ORION";
+            const targetBeacon = { lat: 32.5362, lon: -97.3239 }; 
+            const ACTIVATION_DISTANCE_METERS = 10;
+            let previousDistance = Infinity;
+            
             let currentArrowAngle = 0;
             let targetArrowAngle = 0;
             let instructionTimeout;
 
-            // This is the function that makes the text fade out
-            function updateInstructionText(message, persistent = false) {
-                instructionText.textContent = message;
-                instructionText.classList.remove('fade-out');
-
-                // Clear any existing fade-out timer
-                if (instructionTimeout) clearTimeout(instructionTimeout);
-
-                // If the message is not persistent, make it fade after 3 seconds
-                if (!persistent) {
-                    instructionTimeout = setTimeout(() => {
-                        instructionText.classList.add('fade-out');
-                    }, 3000);
-                }
-            }
+            startButton.addEventListener('click', startButtonClickHandler);
+            activateArButton.addEventListener('click', activateAR);
+            submitCodeButton.addEventListener('click', submitCode);
 
             async function startButtonClickHandler() {
-                // Request permissions first
                 try {
-                    // Compass/Motion sensors
                     if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                         const permissionState = await DeviceOrientationEvent.requestPermission();
                         if (permissionState !== 'granted') {
                             alert("Compass access is required for the mini-map."); return;
                         }
                     }
-                    // GPS
                     if (!('geolocation' in navigator)) {
                         alert("Geolocation is not supported."); return;
                     }
                     await new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject));
                     
-                    // All permissions granted, start the game
                     startGame();
                 } catch (error) {
                     alert("Permissions are required to play. Please refresh and try again.");
                 }
             }
-            
+
             function startGame() {
                 startScreen.style.display = 'none';
                 gameUi.style.display = 'block';
-                updateInstructionText("Follow the red dot on your map.", true); // This first message is persistent
-                
-                // Add back the listeners for compass and GPS
+                updateInstructionText("Follow the red dot on your map.", true);
                 window.addEventListener('deviceorientation', handleOrientation);
                 navigator.geolocation.watchPosition(handlePositionUpdate);
-                requestAnimationFrame(updateArrowRotation); // Start the arrow smoothing
+                requestAnimationFrame(updateArrowRotation);
             }
 
-            // --- Arrow and Position Handling (Restored) ---
             function handleOrientation(event) {
                 if (event.alpha) {
                     targetArrowAngle = event.alpha;
@@ -116,7 +142,7 @@
                 playerArrow.style.transform = `translate(-50%, -60%) rotate(${currentArrowAngle}deg)`;
                 requestAnimationFrame(updateArrowRotation);
             }
-            
+
             function handlePositionUpdate(position) {
                 const { latitude, longitude } = position.coords;
                 const distance = getDistance(latitude, longitude, targetBeacon.lat, targetBeacon.lon);
@@ -139,6 +165,52 @@
                 previousDistance = distance;
                 updateBeaconDot(latitude, longitude, targetBeacon.lat, targetBeacon.lon);
             }
+            
+            async function activateAR() {
+                gameUi.style.opacity = '0';
+                arScene.style.visibility = 'visible';
+                const arSystem = arScene.systems["mindar-image-system"];
+                try {
+                    await arSystem.start();
+                } catch (err) {
+                    console.error("Error starting AR:", err);
+                }
+            }
+            
+            const targetEntity = document.getElementById('target-entity');
+            targetEntity.addEventListener("targetFound", event => {
+                const arSystem = arScene.systems["mindar-image-system"];
+                arSystem.stop();
+                arScene.style.visibility = 'hidden';
+                gameUi.style.opacity = '1';
+
+                updateInstructionText("You found a secret code!", true);
+                arControls.style.display = 'none';
+                puzzleInputContainer.style.display = 'block';
+                puzzleInput.focus();
+            });
+
+            function submitCode() {
+                if (puzzleInput.value.toUpperCase() === SECRET_CODE) {
+                    alert("Correct! You've unlocked the next stage!");
+                    puzzleInputContainer.style.display = 'none';
+                    puzzleInput.value = '';
+                    updateInstructionText("Find the next beacon...", true);
+                } else {
+                    alert("Incorrect code. Try again!");
+                }
+            }
+
+            function updateInstructionText(message, persistent = false) {
+                instructionText.textContent = message;
+                instructionText.classList.remove('fade-out');
+                if (instructionTimeout) clearTimeout(instructionTimeout);
+                if (!persistent) {
+                    instructionTimeout = setTimeout(() => {
+                        instructionText.classList.add('fade-out');
+                    }, 3000);
+                }
+            }
 
             function updateBeaconDot(playerLat, playerLon, beaconLat, beaconLon) {
                 const bearing = getBearing(playerLat, playerLon, beaconLat, beaconLon);
@@ -148,6 +220,13 @@
                 const y = -mapRadius * Math.cos(angle);
                 beaconDot.style.left = `calc(50% + ${x}px - 7.5px)`;
                 beaconDot.style.top = `calc(50% + ${y}px - 7.5px)`;
+            }
+
+            function getDistance(lat1, lon1, lat2, lon2) {
+                const R = 6371e3; const φ1 = lat1 * Math.PI/180; const φ2 = lat2 * Math.PI/180;
+                const Δφ = (lat2-lat1) * Math.PI/180; const Δλ = (lon2-lon1) * Math.PI/180;
+                const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); return R * c;
             }
 
             function getBearing(lat1, lon1, lat2, lon2){
@@ -167,9 +246,7 @@
                 let value = (start + ((end - start) * amount));
                 return value % 360;
             }
-            
-            // All other functions (AR, distance, etc.) remain the same
         });
     </script>
-    </body>
+</body>
 </html>
