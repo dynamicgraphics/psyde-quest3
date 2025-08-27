@@ -3,12 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Beacon Quest - Dungeon Hunt</title>
+    <title>Psyde Quest</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-    
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
     <style>
         /* --- General Styling --- */
         body, html {
@@ -31,10 +27,8 @@
             align-items: center;
             height: 100%;
             width: 100%;
-            padding: 20px;
-            box-sizing: border-box;
-            /* Updated background image */
-            background: #222 url('https://res.cloudinary.com/dvf40x79k/image/upload/v1708645009/dungeon_tile_bg_y3j86m.png') repeat; 
+            background: #222 url('https://res.cloudinary.com/dvf40x79k/image/upload/v1708645009/dungeon_tile_bg_y3j86m.png') repeat;
+            position: relative;
         }
         
         /* --- Screen Styling --- */
@@ -43,23 +37,29 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            width: 100%;
+            width: 90%;
             max-width: 400px;
             background-color: rgba(0,0,0,0.7); /* Dark overlay for readability */
             padding: 20px;
             border: 4px solid #fff;
             box-shadow: 0 0 15px rgba(255,255,255,0.5);
-            margin: 10px;
+            z-index: 10; /* Make sure screens are on top */
         }
         
         #start-screen {
-            display: flex; /* Start screen is visible first */
+            display: flex; 
+        }
+
+        #game-screen {
+            background: none;
+            border: none;
+            box-shadow: none;
         }
         
         h1 {
             font-size: 2em;
-            color: #FFFF00; /* Yellow title */
-            text-shadow: 3px 3px #AA5D00; /* Brownish shadow for retro feel */
+            color: #FFFF00;
+            text-shadow: 3px 3px #AA5D00;
             margin-bottom: 20px;
         }
 
@@ -67,10 +67,8 @@
             font-size: 0.8em;
             line-height: 1.5;
             margin: 10px 0;
-            padding: 5px;
         }
         
-        /* --- Buttons --- */
         button {
             background-color: #555;
             color: #fff;
@@ -82,21 +80,66 @@
             margin-top: 20px;
         }
 
-        button:active {
-            box-shadow: none;
-            transform: translate(4px, 4px);
+        /* --- Mini-Map Styling --- */
+        #mini-map-container {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 120px;
+            height: 120px;
+            border: 3px solid #fff;
+            border-radius: 50%; /* Circular map */
+            background-color: rgba(0,0,0,0.8);
+            box-shadow: 0 0 10px #000;
+            z-index: 100;
+        }
+        
+        #player-arrow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-bottom: 15px solid #00FF00; /* Green player arrow */
+            transform: translate(-50%, -50%);
+            transition: transform 0.2s linear; /* Smooth rotation */
+        }
+        
+        #beacon-dot {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background-color: #FF0000; /* Red beacon dot */
+            border-radius: 50%;
+            border: 2px solid #fff;
+            /* Position will be set by JavaScript */
         }
 
-        /* --- Map Styling --- */
-        #map-container {
-            width: 100%;
-            max-width: 400px;
-            height: 70vh; /* Make map take up most of the vertical space */
-            max-height: 400px;
-            border: 4px solid #fff;
-            box-shadow: 0 0 10px #000;
-            background-color: #000;
-            margin-bottom: 10px; /* Space between map and hint text */
+        /* --- Proximity Ring Styling --- */
+        #ring-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 250px;
+            height: 250px;
+            border: 5px solid #555; /* Dormant color */
+            border-radius: 50%;
+            transition: all 0.5s ease;
+        }
+        
+        #ring-container.active {
+            border-color: #FFFF00; /* Active yellow color */
+            box-shadow: 0 0 20px #FFFF00;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: translate(-50%, -50%) scale(0.95); box-shadow: 0 0 0 0 rgba(255, 255, 0, 0.7); }
+            70% { transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 10px 20px rgba(255, 255, 0, 0); }
+            100% { transform: translate(-50%, -50%) scale(0.95); box-shadow: 0 0 0 0 rgba(255, 255, 0, 0); }
         }
 
     </style>
@@ -106,16 +149,19 @@
     <div id="game-container">
 
         <div id="start-screen" class="screen">
-            <h1>BEACON QUEST</h1>
-            <p>An underground adventure awaits. Allow permissions to begin your hunt.</p>
-            <p style="font-size: 0.6em; border:none; background:none;">(This game does not collect or store any personal data)</p>
-            <button id="start-button">Enter the Dungeon</button>
+            <h1>Psyde Quest</h1>
+            <p>An adventure awaits. Allow permissions to begin your quest.</p>
+            <button id="start-button">Begin</button>
         </div>
 
         <div id="game-screen" class="screen">
-            <div id="map-container"></div>
-            <p id="hint-text">Use the map to find the beacon!</p>
+            <div id="mini-map-container">
+                <div id="player-arrow"></div>
+                <div id="beacon-dot"></div>
+            </div>
+            <div id="ring-container"></div>
         </div>
+
     </div>
 
     <script>
@@ -123,33 +169,34 @@
         const startScreen = document.getElementById('start-screen');
         const gameScreen = document.getElementById('game-screen');
         const startButton = document.getElementById('start-button');
-        const hintText = document.getElementById('hint-text');
-        const mapContainer = document.getElementById('map-container');
+        const playerArrow = document.getElementById('player-arrow');
+        const beaconDot = document.getElementById('beacon-dot');
+        const ringContainer = document.getElementById('ring-container');
 
-        // --- Map & Player State Variables ---
-        let map;
-        let playerMarker;
-        // This is a custom icon for our player
-        const playerIcon = L.icon({
-            iconUrl: 'https://res.cloudinary.com/dvf40x79k/image/upload/v1708645009/player_sprite_nes_kewjrg.png', // Updated 8-bit hero sprite
-            iconSize: [24, 32], 
-            iconAnchor: [12, 32], 
-        });
+        // --- Game State & Beacons ---
+        // Placeholder for the first beacon's location (e.g., somewhere in Burleson, TX)
+        // We will make this a dynamic list later.
+        const targetBeacon = { lat: 32.5362, lon: -97.3239 }; 
+        const ACTIVATION_DISTANCE_METERS = 10; // 10 meters = ~33 feet
 
         // --- Event Listener ---
         startButton.addEventListener('click', requestPermissionsAndStart);
 
         // --- Core Functions ---
         async function requestPermissionsAndStart() {
-            // (Permission logic remains the same)
-            if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+            // Requesting motion/orientation sensors is crucial for the mini-map arrow
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                 try {
-                    await DeviceMotionEvent.requestPermission();
-                    await DeviceOrientationEvent.requestPermission();
+                    const permissionState = await DeviceOrientationEvent.requestPermission();
+                    if (permissionState !== 'granted') {
+                        alert("Compass access is required for the mini-map. Please refresh and grant permission.");
+                        return;
+                    }
                 } catch (error) {
-                    console.warn("Permission request failed or not needed.", error);
+                    console.warn("Compass permission request failed or not needed.", error);
                 }
             }
+            // GPS Permission
             if (!('geolocation' in navigator)) {
                 alert("Geolocation is not supported.");
                 return;
@@ -157,7 +204,7 @@
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     console.log("GPS permission granted.");
-                    startGame(position); // Pass initial position to the game
+                    startGame();
                 },
                 (error) => {
                     alert("GPS access is required. Please refresh and grant permission.");
@@ -165,48 +212,83 @@
             );
         }
 
-        function startGame(initialPosition) {
+        function startGame() {
             startScreen.style.display = 'none';
-            gameScreen.style.display = 'flex';
+            gameScreen.style.display = 'block'; // Use 'block' since it's not a flex container anymore
             
-            initMap(initialPosition);
-        }
-
-        // --- Map Initialization ---
-        function initMap(initialPosition) {
-            const lat = initialPosition.coords.latitude;
-            const lon = initialPosition.coords.longitude;
-
-            // Create the map, centered on the player's initial location
-            map = L.map(mapContainer, {
-                zoomControl: false, 
-                scrollWheelZoom: false 
-            }).setView([lat, lon], 19); 
-
-            // Using CartoDB Dark Matter tiles - no API key needed
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                maxZoom: 20,
-                attribution: '&copy; <a href="https://carto.com/attributions">CartoDB</a>, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            }).addTo(map);
-
-            // Add the player marker to the map
-            playerMarker = L.marker([lat, lon], { icon: playerIcon }).addTo(map);
+            // Start listening for device orientation (compass)
+            window.addEventListener('deviceorientation', handleOrientation);
             
             // Start watching for GPS position changes
-            navigator.geolocation.watchPosition(updatePlayerPosition);
+            navigator.geolocation.watchPosition(handlePositionUpdate);
+        }
+
+        function handleOrientation(event) {
+            // event.alpha is the compass direction
+            if (event.alpha) {
+                playerArrow.style.transform = `translate(-50%, -50%) rotate(${event.alpha}deg)`;
+            }
+        }
+
+        function handlePositionUpdate(position) {
+            const playerLat = position.coords.latitude;
+            const playerLon = position.coords.longitude;
+
+            const distance = getDistance(playerLat, playerLon, targetBeacon.lat, targetBeacon.lon);
+            
+            // Activate or deactivate the ring based on distance
+            if (distance <= ACTIVATION_DISTANCE_METERS) {
+                ringContainer.classList.add('active');
+            } else {
+                ringContainer.classList.remove('active');
+            }
+            
+            // Update the mini-map beacon dot
+            updateBeaconDot(playerLat, playerLon, targetBeacon.lat, targetBeacon.lon);
         }
         
-        function updatePlayerPosition(position) {
-            const lat = position.coords.latitude;
-            const lon = position.coords.longitude;
+        function updateBeaconDot(playerLat, playerLon, beaconLat, beaconLon) {
+            const bearing = getBearing(playerLat, playerLon, beaconLat, beaconLon);
             
-            const newLatLng = new L.LatLng(lat, lon);
+            // Convert bearing to position on the edge of the circular mini-map
+            // 0 deg (North) should be top, 90 (East) right, etc.
+            const angle = bearing * (Math.PI / 180); // to radians
+            const mapRadius = 50; // 50px radius (half of 120px width, minus padding)
             
-            // Update the marker's position and re-center the map
-            playerMarker.setLatLng(newLatLng);
-            map.panTo(newLatLng);
+            const x = mapRadius * Math.sin(angle);
+            const y = -mapRadius * Math.cos(angle);
             
-            console.log(`Player moved to: ${lat}, ${lon}`);
+            // Position the dot from the center of the map
+            beaconDot.style.left = `calc(50% + ${x}px)`;
+            beaconDot.style.top = `calc(50% + ${y}px)`;
+        }
+
+        // --- Helper Functions for GPS calculations ---
+        function getDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371e3; // metres
+            const φ1 = lat1 * Math.PI/180;
+            const φ2 = lat2 * Math.PI/180;
+            const Δφ = (lat2-lat1) * Math.PI/180;
+            const Δλ = (lon2-lon1) * Math.PI/180;
+
+            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                      Math.cos(φ1) * Math.cos(φ2) *
+                      Math.sin(Δλ/2) * Math.sin(Δλ/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c; // in metres
+        }
+        
+        function getBearing(lat1, lon1, lat2, lon2){
+             const φ1 = lat1 * Math.PI/180;
+             const φ2 = lat2 * Math.PI/180;
+             const λ1 = lon1 * Math.PI/180;
+             const λ2 = lon2 * Math.PI/180;
+             
+             const y = Math.sin(λ2-λ1) * Math.cos(φ2);
+             const x = Math.cos(φ1)*Math.sin(φ2) -
+                       Math.sin(φ1)*Math.cos(φ2)*Math.cos(λ2-λ1);
+             const θ = Math.atan2(y, x);
+             return (θ*180/Math.PI + 360) % 360; // in degrees
         }
 
     </script>
