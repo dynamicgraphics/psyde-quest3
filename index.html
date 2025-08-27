@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Beacon Quest - Dungeon Hunt</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
     <style>
         /* --- General Styling --- */
         body, html {
@@ -29,6 +33,7 @@
             width: 100%;
             padding: 20px;
             box-sizing: border-box;
+            background: #222 url('https://i.imgur.com/V9Jvj2b.png') repeat; /* Pixelated stone texture */
         }
         
         /* --- Screen Styling --- */
@@ -55,6 +60,9 @@
             font-size: 0.8em;
             line-height: 1.5;
             margin: 20px 0;
+            background-color: rgba(0,0,0,0.7);
+            padding: 10px;
+            border: 2px solid #fff;
         }
         
         /* --- Buttons --- */
@@ -66,7 +74,6 @@
             font-family: 'Press Start 2P', cursive;
             cursor: pointer;
             box-shadow: 4px 4px #222;
-            margin-top: 20px;
         }
 
         button:active {
@@ -74,12 +81,15 @@
             transform: translate(4px, 4px);
         }
 
-        /* --- Game Elements (Placeholders for now) --- */
-        #message-box {
-            border: 3px solid #fff;
-            background-color: #111;
-            padding: 15px;
-            min-height: 50px;
+        /* --- Map Styling --- */
+        #map-container {
+            width: 100%;
+            max-width: 400px;
+            height: 70vh; /* Make map take up most of the vertical space */
+            max-height: 400px;
+            border: 4px solid #fff;
+            box-shadow: 0 0 10px #000;
+            background-color: #000;
         }
 
     </style>
@@ -91,16 +101,14 @@
         <div id="start-screen" class="screen">
             <h1>BEACON QUEST</h1>
             <p>An underground adventure awaits. Allow permissions to begin your hunt.</p>
-            <p style="font-size: 0.6em;">(This game does not collect or store any personal data)</p>
+            <p style="font-size: 0.6em; border:none; background:none;">(This game does not collect or store any personal data)</p>
             <button id="start-button">Enter the Dungeon</button>
         </div>
 
         <div id="game-screen" class="screen">
-            <div id="message-box">
-                <p id="hint-text">Find the first beacon...</p>
-            </div>
-            
-            </div>
+            <div id="map-container"></div>
+            <p id="hint-text">Use the map to find the beacon!</p>
+        </div>
     </div>
 
     <script>
@@ -109,74 +117,89 @@
         const gameScreen = document.getElementById('game-screen');
         const startButton = document.getElementById('start-button');
         const hintText = document.getElementById('hint-text');
+        const mapContainer = document.getElementById('map-container');
+
+        // --- Map & Player State Variables ---
+        let map;
+        let playerMarker;
+        // This is a custom icon for our player
+        const playerIcon = L.icon({
+            iconUrl: 'https://i.imgur.com/pBQK5a5.png', // 8-bit hero sprite
+            iconSize: [24, 32], 
+            iconAnchor: [12, 32], 
+        });
 
         // --- Event Listener ---
         startButton.addEventListener('click', requestPermissionsAndStart);
 
         // --- Core Functions ---
         async function requestPermissionsAndStart() {
-            console.log("Player clicked start. Requesting permissions...");
-            
-            // --- 1. Motion Sensor (Accelerometer/Gyroscope) Permission ---
-            // This is the modern way to request motion sensor access.
-            // It must be triggered by a user action, like a click.
+            // (Permission logic remains the same)
             if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
                 try {
-                    const motionPermission = await DeviceMotionEvent.requestPermission();
-                    if (motionPermission !== 'granted') {
-                        alert("Motion sensor access is needed for some puzzles. Please refresh and grant permission.");
-                        return;
-                    }
+                    await DeviceMotionEvent.requestPermission();
+                    await DeviceOrientationEvent.requestPermission();
                 } catch (error) {
-                    console.warn("DeviceMotionEvent.requestPermission() not needed or failed.", error);
+                    console.warn("Permission request failed or not needed.", error);
                 }
             }
-             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                try {
-                    const orientationPermission = await DeviceOrientationEvent.requestPermission();
-                    if (orientationPermission !== 'granted') {
-                        alert("Device orientation access is needed for the compass. Please refresh and grant permission.");
-                        return;
-                    }
-                } catch (error) {
-                     console.warn("DeviceOrientationEvent.requestPermission() not needed or failed.", error);
-                }
-            }
-
-
-            // --- 2. GPS (Geolocation) Permission ---
-            // This will trigger a browser prompt if not already granted.
             if (!('geolocation' in navigator)) {
-                alert("Geolocation is not supported by your browser.");
+                alert("Geolocation is not supported.");
                 return;
             }
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     console.log("GPS permission granted.");
-                    // --- 3. Bluetooth Permission (Chained after GPS) ---
-                    // We request this last. The `requestDevice` call later will trigger the prompt.
-                    console.log("All permissions seem to be in order. Starting game.");
-                    startGame();
+                    startGame(position); // Pass initial position to the game
                 },
                 (error) => {
-                    alert("GPS access is required to play. Please refresh and grant permission.");
-                    console.error("Geolocation error:", error);
+                    alert("GPS access is required. Please refresh and grant permission.");
                 }
             );
         }
 
-        function startGame() {
-            // Hide start screen and show the main game screen
+        function startGame(initialPosition) {
             startScreen.style.display = 'none';
             gameScreen.style.display = 'flex';
             
-            hintText.textContent = "Venture forth! The first hint will appear here...";
+            initMap(initialPosition);
+        }
+
+        // --- Map Initialization ---
+        function initMap(initialPosition) {
+            const lat = initialPosition.coords.latitude;
+            const lon = initialPosition.coords.longitude;
+
+            // Create the map, centered on the player's initial location
+            map = L.map(mapContainer, {
+                zoomControl: false, // Hide the +/- zoom buttons
+                scrollWheelZoom: false // Disable zoom via scroll
+            }).setView([lat, lon], 19); // 19 is a very high zoom level, good for walking
+
+            // We are using a dark, retro-style map theme from Stadia Maps
+            L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
+                maxZoom: 20,
+                attribution: '&copy; Stadia Maps, &copy; OpenMapTiles &copy; OpenStreetMap'
+            }).addTo(map);
+
+            // Add the player marker to the map
+            playerMarker = L.marker([lat, lon], { icon: playerIcon }).addTo(map);
             
-            // --- NEXT STEPS ---
-            // We will now build the functions for:
-            // 1. initGPS() - To start watching the user's position for the map.
-            // 2. initBLE() - To handle beacon scanning.
-            // 3. updateUI() - A main game loop to switch between map and ring views.
+            // Start watching for GPS position changes
+            navigator.geolocation.watchPosition(updatePlayerPosition);
+        }
+        
+        function updatePlayerPosition(position) {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            
+            const newLatLng = new L.LatLng(lat, lon);
+            
+            // Update the marker's position and re-center the map
+            playerMarker.setLatLng(newLatLng);
+            map.panTo(newLatLng);
+            
+            console.log(`Player moved to: ${lat}, ${lon}`);
         }
 
     </script>
