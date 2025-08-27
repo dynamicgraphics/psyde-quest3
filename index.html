@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Beacon Quest - Dungeon Hunt</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        /* --- General Styling --- */
+        body, html {
+            background-color: #000;
+            color: #fff;
+            font-family: 'Press Start 2P', cursive;
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        /* --- Game Container --- */
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        
+        /* --- Screen Styling --- */
+        .screen {
+            display: none; /* All screens hidden by default */
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        #start-screen {
+            display: flex; /* Start screen is visible first */
+        }
+        
+        h1 {
+            font-size: 2em;
+            color: #FFFF00; /* Yellow title */
+            text-shadow: 3px 3px #AA5D00; /* Brownish shadow for retro feel */
+        }
+
+        p {
+            font-size: 0.8em;
+            line-height: 1.5;
+            margin: 20px 0;
+        }
+        
+        /* --- Buttons --- */
+        button {
+            background-color: #555;
+            color: #fff;
+            border: 3px solid #fff;
+            padding: 15px 25px;
+            font-family: 'Press Start 2P', cursive;
+            cursor: pointer;
+            box-shadow: 4px 4px #222;
+            margin-top: 20px;
+        }
+
+        button:active {
+            box-shadow: none;
+            transform: translate(4px, 4px);
+        }
+
+        /* --- Game Elements (Placeholders for now) --- */
+        #message-box {
+            border: 3px solid #fff;
+            background-color: #111;
+            padding: 15px;
+            min-height: 50px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+
+        <div id="start-screen" class="screen">
+            <h1>BEACON QUEST</h1>
+            <p>An underground adventure awaits. Allow permissions to begin your hunt.</p>
+            <p style="font-size: 0.6em;">(This game does not collect or store any personal data)</p>
+            <button id="start-button">Enter the Dungeon</button>
+        </div>
+
+        <div id="game-screen" class="screen">
+            <div id="message-box">
+                <p id="hint-text">Find the first beacon...</p>
+            </div>
+            
+            </div>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const startScreen = document.getElementById('start-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const startButton = document.getElementById('start-button');
+        const hintText = document.getElementById('hint-text');
+
+        // --- Event Listener ---
+        startButton.addEventListener('click', requestPermissionsAndStart);
+
+        // --- Core Functions ---
+        async function requestPermissionsAndStart() {
+            console.log("Player clicked start. Requesting permissions...");
+            
+            // --- 1. Motion Sensor (Accelerometer/Gyroscope) Permission ---
+            // This is the modern way to request motion sensor access.
+            // It must be triggered by a user action, like a click.
+            if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+                try {
+                    const motionPermission = await DeviceMotionEvent.requestPermission();
+                    if (motionPermission !== 'granted') {
+                        alert("Motion sensor access is needed for some puzzles. Please refresh and grant permission.");
+                        return;
+                    }
+                } catch (error) {
+                    console.warn("DeviceMotionEvent.requestPermission() not needed or failed.", error);
+                }
+            }
+             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                try {
+                    const orientationPermission = await DeviceOrientationEvent.requestPermission();
+                    if (orientationPermission !== 'granted') {
+                        alert("Device orientation access is needed for the compass. Please refresh and grant permission.");
+                        return;
+                    }
+                } catch (error) {
+                     console.warn("DeviceOrientationEvent.requestPermission() not needed or failed.", error);
+                }
+            }
+
+
+            // --- 2. GPS (Geolocation) Permission ---
+            // This will trigger a browser prompt if not already granted.
+            if (!('geolocation' in navigator)) {
+                alert("Geolocation is not supported by your browser.");
+                return;
+            }
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    console.log("GPS permission granted.");
+                    // --- 3. Bluetooth Permission (Chained after GPS) ---
+                    // We request this last. The `requestDevice` call later will trigger the prompt.
+                    console.log("All permissions seem to be in order. Starting game.");
+                    startGame();
+                },
+                (error) => {
+                    alert("GPS access is required to play. Please refresh and grant permission.");
+                    console.error("Geolocation error:", error);
+                }
+            );
+        }
+
+        function startGame() {
+            // Hide start screen and show the main game screen
+            startScreen.style.display = 'none';
+            gameScreen.style.display = 'flex';
+            
+            hintText.textContent = "Venture forth! The first hint will appear here...";
+            
+            // --- NEXT STEPS ---
+            // We will now build the functions for:
+            // 1. initGPS() - To start watching the user's position for the map.
+            // 2. initBLE() - To handle beacon scanning.
+            // 3. updateUI() - A main game loop to switch between map and ring views.
+        }
+
+    </script>
+</body>
+</html>
