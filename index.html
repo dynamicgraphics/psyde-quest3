@@ -6,51 +6,85 @@
     <title>Psyde Quest</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
-        body, html { /* ... no changes ... */ }
-        #game-container { /* ... no changes ... */ }
-        .screen { /* ... no changes ... */ }
-        #start-screen { /* ... no changes ... */ }
-        #game-screen { /* ... no changes ... */ }
-        h1, p, button { /* ... no changes ... */ }
+        body, html {
+            background-color: #000; color: #fff; font-family: 'Press Start 2P', cursive;
+            margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; text-align: center;
+        }
+        #game-container {
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            height: 100%; width: 100%;
+            background: #222 url('https://res.cloudinary.com/dvf40x79k/image/upload/v1708645009/dungeon_tile_bg_y3j86m.png') repeat;
+            position: relative;
+        }
+        .screen {
+            display: none; flex-direction: column; justify-content: center; align-items: center;
+            width: 90%; max-width: 400px; background-color: rgba(0,0,0,0.7);
+            padding: 20px; z-index: 10;
+            border: 20px solid; border-image-slice: 3; border-image-width: 20px; border-image-repeat: stretch;
+            border-image-source: url('data:image/svg+xml;utf8,<?xml version="1.0" encoding="UTF-8" ?><svg version="1.1" width="9" height="9" xmlns="http://www.w3.org/2000/svg"><path d="M3,0 H6 V3 H9 V6 H6 V9 H3 V6 H0 V3 H3 Z" fill-rule="evenodd" fill="white" /></svg>');
+            image-rendering: pixelated;
+        }
+        #start-screen { display: flex; }
+        #game-screen { background: none; border: none; padding: 0; }
+        h1 { font-size: 2em; color: #FFFF00; text-shadow: 3px 3px #AA5D00; margin-bottom: 20px; }
+        p { font-size: 0.8em; line-height: 1.5; margin: 10px 0; }
+        button { background-color: #555; color: #fff; border: 3px solid #fff; padding: 15px 25px; font-family: 'Press Start 2P', cursive; cursor: pointer; box-shadow: 4px 4px #222; margin-top: 20px; }
 
         #mini-map-container {
             position: absolute; top: 20px; left: 20px;
-            width: 150px; height: 150px; /* NEW: Larger default size */
+            width: 150px; height: 150px;
             background-color: rgba(0,0,0,0.8);
             border-radius: 50%;
             z-index: 100;
             background-image: url('data:image/svg+xml;utf8,<?xml version="1.0" encoding="UTF-8" ?><svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><circle cx="60" cy="60" r="58" stroke="white" stroke-width="4"/></svg>');
             image-rendering: pixelated;
-            transition: all 0.5s ease-in-out; /* NEW: Smooth transition for resizing */
+            transition: all 0.5s ease-in-out;
         }
-        
-        /* NEW: Class for the smaller map size */
         #mini-map-container.shrunk {
             width: 100px; height: 100px;
         }
-        
-        #player-arrow { /* ... no changes ... */ }
-        #beacon-dot { /* ... no changes ... */ }
-        #ring-container { /* ... no changes ... */ }
-        #ring-container.active { /* ... no changes ... */ }
-        @keyframes pulse { /* ... no changes ... */ }
-        #instruction-text { /* ... no changes ... */ }
-
-        /* NEW: Styling for the Scan Button */
+        #player-arrow {
+            position: absolute; top: 50%; left: 50%; width: 0; height: 0;
+            border-left: 8px solid transparent; border-right: 8px solid transparent; border-bottom: 24px solid #FFFFFF;
+            transform: translate(-50%, -60%); transition: transform 0.2s linear;
+        }
+        #beacon-dot {
+            position: absolute; width: 15px; height: 15px; background-color: #FF0000;
+            border-radius: 50%; border: 2px solid #fff;
+        }
+        #ring-container {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 250px; height: 250px; border: 5px solid #555; border-radius: 50%; transition: all 0.5s ease;
+        }
+        #ring-container.active { border-color: #FFFF00; box-shadow: 0 0 20px #FFFF00; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 
+            0% { transform: translate(-50%, -50%) scale(0.95); box-shadow: 0 0 0 0 rgba(255, 255, 0, 0.7); }
+            70% { transform: translate(-50%, -50%) scale(1); box-shadow: 0 0 10px 20px rgba(255, 255, 0, 0); }
+            100% { transform: translate(-50%, -50%) scale(0.95); box-shadow: 0 0 0 0 rgba(255, 255, 0, 0); }
+         }
+        #instruction-text {
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 400px; background-color: rgba(0,0,0,0.8);
+            border: 3px solid #fff; padding: 15px; z-index: 100;
+        }
         #scan-button {
             position: absolute;
             bottom: 100px;
             left: 50%;
             transform: translateX(-50%);
             z-index: 100;
-            display: none; /* Hidden by default */
+            display: none;
         }
     </style>
 </head>
 <body>
     <div id="game-container">
         <div id="start-screen" class="screen">
-            </div>
+            <h1>Psyde Quest</h1>
+            <p id="start-prompt">An adventure awaits. Allow permissions to begin your quest.</p>
+            <button id="start-button">Begin</button>
+            <p style="font-size: 0.6em; margin-top: 20px;">(This game does not collect or store any personal data)</p>
+        </div>
 
         <div id="game-screen" class="screen">
             <div id="mini-map-container">
@@ -67,7 +101,6 @@
         // --- DOM Elements ---
         const scanButton = document.getElementById('scan-button');
         const miniMap = document.getElementById('mini-map-container');
-        // (Other elements are the same)
         const startScreen = document.getElementById('start-screen');
         const gameScreen = document.getElementById('game-screen');
         const startButton = document.getElementById('start-button');
@@ -76,7 +109,6 @@
         const ringContainer = document.getElementById('ring-container');
         const instructionText = document.getElementById('instruction-text');
         const startPrompt = document.getElementById('start-prompt');
-
 
         // --- Game State & Beacons ---
         const BEACON_UUID = "8ec76ea3-6668-48da-9866-75be8d83f82d";
@@ -87,11 +119,31 @@
         // --- Initial Load ---
         window.addEventListener('load', checkPermissionsOnLoad);
         startButton.addEventListener('click', requestPermissionsAndStart);
-        scanButton.addEventListener('click', scanForBeacon); // NEW: Event listener for scan button
+        scanButton.addEventListener('click', scanForBeacon);
 
         // --- Core Functions ---
-        async function checkPermissionsOnLoad() { /* ... no changes ... */ }
-        async function requestPermissionsAndStart() { /* ... no changes ... */ }
+        async function checkPermissionsOnLoad() {
+            if (navigator.permissions) {
+                const geoPermission = await navigator.permissions.query({ name: 'geolocation' });
+                if (geoPermission.state === 'granted') {
+                    startPrompt.textContent = "Welcome back! Ready for another quest?";
+                }
+            }
+        }
+
+        async function requestPermissionsAndStart() {
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                const permissionState = await DeviceOrientationEvent.requestPermission();
+                if (permissionState !== 'granted') {
+                    alert("Compass access is required. Please refresh and grant permission."); return;
+                }
+            }
+            if (!('geolocation' in navigator)) { alert("Geolocation is not supported."); return; }
+            navigator.geolocation.getCurrentPosition(
+                (position) => { startGame(); },
+                (error) => { alert("GPS access is required. Please refresh and grant permission."); }
+            );
+        }
 
         function startGame() {
             startScreen.style.display = 'none';
@@ -101,8 +153,15 @@
             navigator.geolocation.watchPosition(handlePositionUpdate);
         }
 
-        function updateInstructionText(message) { /* ... no changes ... */ }
-        function handleOrientation(event) { /* ... no changes ... */ }
+        function updateInstructionText(message) {
+            instructionText.textContent = message;
+        }
+
+        function handleOrientation(event) {
+            if (event.alpha) {
+                playerArrow.style.transform = `translate(-50%, -60%) rotate(${event.alpha}deg)`;
+            }
+        }
 
         function handlePositionUpdate(position) {
             const playerLat = position.coords.latitude;
@@ -111,18 +170,17 @@
             
             if (distance <= ACTIVATION_DISTANCE_METERS) {
                 ringContainer.classList.add('active');
-                miniMap.classList.add('shrunk'); // Shrink map
-                scanButton.style.display = 'block'; // Show scan button
+                miniMap.classList.add('shrunk');
+                scanButton.style.display = 'block';
                 updateInstructionText("You're close! Press SCAN!");
             } else {
                 ringContainer.classList.remove('active');
-                miniMap.classList.remove('shrunk'); // Enlarge map
-                scanButton.style.display = 'none'; // Hide scan button
+                miniMap.classList.remove('shrunk');
+                scanButton.style.display = 'none';
                 
-                // NEW: Jitter threshold added
-                if (previousDistance - distance > 2) { // Moved more than 2m closer
+                if (previousDistance - distance > 2) {
                     updateInstructionText("You're getting warmer...");
-                } else if (distance - previousDistance > 2) { // Moved more than 2m farther
+                } else if (distance - previousDistance > 2) {
                     updateInstructionText("Getting colder... Turn back!");
                 }
             }
@@ -130,7 +188,6 @@
             updateBeaconDot(playerLat, playerLon, targetBeacon.lat, targetBeacon.lon);
         }
 
-        // --- NEW: Web Bluetooth Scan Function ---
         async function scanForBeacon() {
             if (!navigator.bluetooth) {
                 alert("Web Bluetooth is not available on this device!");
@@ -140,16 +197,14 @@
             try {
                 updateInstructionText("Searching for beacon signal...");
                 
-                // Request a device that is advertising the specific service UUID
                 const device = await navigator.bluetooth.requestDevice({
                     filters: [{ services: [BEACON_UUID] }]
                 });
 
                 updateInstructionText("Beacon Found! Quest Complete!");
-                navigator.vibrate(200); // Haptic feedback!
-                ringContainer.style.borderColor = '#00FF00'; // Turn ring green for success
-                scanButton.style.display = 'none'; // Hide button after finding
-                // We'll add logic here later to advance to the next stage
+                navigator.vibrate(200);
+                ringContainer.style.borderColor = '#00FF00';
+                scanButton.style.display = 'none';
 
             } catch (error) {
                 console.error("Scan failed:", error);
@@ -157,10 +212,27 @@
             }
         }
         
-        function updateBeaconDot(playerLat, playerLon, beaconLat, beaconLon) { /* ... no changes ... */ }
-        function getDistance(lat1, lon1, lat2, lon2) { /* ... no changes ... */ }
-        function getBearing(lat1, lon1, lat2, lon2) { /* ... no changes ... */ }
+        function updateBeaconDot(playerLat, playerLon, beaconLat, beaconLon) {
+            const bearing = getBearing(playerLat, playerLon, beaconLat, beaconLon);
+            const angle = bearing * (Math.PI / 180);
+            const mapRadius = miniMap.classList.contains('shrunk') ? 40 : 65; // Adjust dot radius based on map size
+            const x = mapRadius * Math.sin(angle);
+            const y = -mapRadius * Math.cos(angle);
+            beaconDot.style.left = `calc(50% + ${x}px - 7.5px)`;
+            beaconDot.style.top = `calc(50% + ${y}px - 7.5px)`;
+        }
 
+        function getDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371e3; const φ1 = lat1 * Math.PI/180; const φ2 = lat2 * Math.PI/180;
+            const Δφ = (lat2-lat1) * Math.PI/180; const Δλ = (lon2-lon1) * Math.PI/180;
+            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); return R * c;
+        }
+        function getBearing(lat1, lon1, lat2, lon2){
+             const φ1 = lat1 * Math.PI/180; const φ2 = lat2 * Math.PI/180; const λ1 = lon1 * Math.PI/180; const λ2 = lon2 * Math.PI/180;
+             const y = Math.sin(λ2-λ1) * Math.cos(φ2); const x = Math.cos(φ1)*Math.sin(φ2) - Math.sin(φ1)*Math.cos(φ2)*Math.cos(λ2-λ1);
+             const θ = Math.atan2(y, x); return (θ*180/PI + 360) % 360;
+        }
     </script>
 </body>
 </html>
