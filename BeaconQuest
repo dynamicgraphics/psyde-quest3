@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retro Scavenger Hunt</title>
+    <style>
+        /* --- General Styling --- */
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: 'Press Start 2P', cursive; /* A popular pixel font */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+
+        /* --- Game Container --- */
+        #game-container {
+            width: 90%;
+            max-width: 400px;
+            border: 4px solid #fff;
+            padding: 20px;
+            background-color: #222;
+            box-shadow: 0 0 10px #fff;
+        }
+
+        /* --- Header --- */
+        h1 {
+            font-size: 1.5em;
+            color: #ff0000; /* Red for a classic look */
+            text-shadow: 2px 2px #000;
+            margin-bottom: 20px;
+        }
+
+        /* --- Message Box --- */
+        #message-box {
+            border: 2px solid #fff;
+            padding: 15px;
+            margin-bottom: 20px;
+            min-height: 100px;
+            background-color: #000;
+        }
+
+        /* --- Status Display --- */
+        #status-display {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        #beacon-info {
+            margin-bottom: 20px;
+        }
+
+        /* --- Buttons --- */
+        button {
+            background-color: #555;
+            color: #fff;
+            border: 2px solid #fff;
+            padding: 10px 15px;
+            font-family: 'Press Start 2P', cursive;
+            cursor: pointer;
+            box-shadow: 2px 2px #000;
+        }
+
+        button:hover {
+            background-color: #777;
+        }
+
+        button:active {
+            box-shadow: none;
+            transform: translate(2px, 2px);
+        }
+
+    </style>
+    <!-- Importing the 'Press Start 2P' font from Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div id="game-container">
+        <h1>BEACON QUEST</h1>
+
+        <div id="message-box">
+            <p id="message">Welcome! Press "Start Game" to begin your adventure.</p>
+        </div>
+
+        <div id="status-display">
+            <div id="gps-status">GPS: Not Ready</div>
+            <div id="ble-status">BLE: Not Ready</div>
+        </div>
+        
+        <div id="beacon-info">
+            <p>Beacons Found: <span id="beacons-found">0</span>/5</p>
+        </div>
+
+
+        <button id="start-button">Start Game</button>
+        <button id="scan-button" style="display: none;">Scan for Beacon</button>
+
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const startButton = document.getElementById('start-button');
+        const scanButton = document.getElementById('scan-button');
+        const messageEl = document.getElementById('message');
+        const gpsStatusEl = document.getElementById('gps-status');
+        const bleStatusEl = document.getElementById('ble-status');
+        const beaconsFoundEl = document.getElementById('beacons-found');
+
+        // --- Game State ---
+        let beaconsFound = 0;
+        let currentBeaconIndex = 0;
+        // Using your specific UUID for all beacons
+        const BEACON_UUID = "8ec76ea3-6668-48da-9866-75be8d83f82d"; 
+
+        const beacons = [
+            { name: "Stage 1", hint: "Hint 1: Find me near the entrance where all adventures begin!" },
+            { name: "Stage 2", hint: "Hint 2: I'm hiding where the artists show their masterpieces." },
+            { name: "Stage 3", hint: "Hint 3: Seek the area with the loudest cheers and button mashing." },
+            { name: "Stage 4", hint: "Hint 4: I'm taking a break where you can grab a snack or a drink." },
+            { name: "Stage 5", hint: "Hint 5: Your final challenge! Find our booth to claim your prize!" }
+        ];
+
+        // --- Event Listeners ---
+        startButton.addEventListener('click', startGame);
+        scanButton.addEventListener('click', scanForBeacon);
+
+        // --- Game Logic ---
+        function startGame() {
+            messageEl.textContent = "Initializing systems...";
+            startButton.style.display = 'none'; // Hide the start button
+            scanButton.style.display = 'block'; // Show the scan button
+            initGPS();
+            
+            if ('bluetooth' in navigator) {
+                bleStatusEl.textContent = "BLE: Ready";
+                messageEl.textContent = beacons[currentBeaconIndex].hint;
+            } else {
+                bleStatusEl.textContent = "BLE: Not Supported";
+                messageEl.textContent = "Your browser doesn't support Web Bluetooth. Please use Chrome on Android or another compatible browser.";
+            }
+        }
+
+        // --- GPS Functionality ---
+        function initGPS() {
+            if ('geolocation' in navigator) {
+                gpsStatusEl.textContent = "GPS: Ready";
+                navigator.geolocation.watchPosition(position => {
+                    // You could add logic here later if needed
+                    console.log(`Lat: ${position.coords.latitude}, Lon: ${position.coords.longitude}`);
+                }, error => {
+                    messageEl.textContent = `GPS Error: ${error.message}`;
+                });
+            } else {
+                gpsStatusEl.textContent = "GPS: Not Supported";
+                messageEl.textContent = "Your browser doesn't support GPS.";
+            }
+        }
+
+        // --- Web Bluetooth Functionality ---
+        async function scanForBeacon() {
+            if (!('bluetooth' in navigator)) {
+                messageEl.textContent = "Web Bluetooth is not supported on this device.";
+                return;
+            }
+
+            try {
+                messageEl.textContent = "Scanning for beacon...";
+                
+                // Request the device with the specific UUID
+                const device = await navigator.bluetooth.requestDevice({
+                    filters: [{ namePrefix: 'ESP32' }], // Filtering by name can be more reliable
+                    optionalServices: ['battery_service', BEACON_UUID] // Add your service UUID here
+                });
+
+                messageEl.textContent = `Found ${beacons[currentBeaconIndex].name}! Connecting...`;
+                
+                // Haptic feedback for finding the beacon
+                if ('vibrate' in navigator) {
+                    navigator.vibrate(200); // Vibrate for 200ms
+                }
+                
+                beaconsFound++;
+                beaconsFoundEl.textContent = `${beaconsFound}/5`;
+                currentBeaconIndex++;
+
+                if (beaconsFound === 5) {
+                    messageEl.textContent = "Congratulations! You found all beacons! Visit our booth to claim your prize and get a discount on your next print order!";
+                    scanButton.style.display = 'none'; // Hide scan button at the end
+                } else {
+                    // Provide the hint for the next stage
+                    messageEl.textContent = `Success! Now on to the next stage. ${beacons[currentBeaconIndex].hint}`;
+                }
+
+            } catch (error) {
+                messageEl.textContent = `Scan failed. Make sure you're close to the beacon and try again. Error: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
