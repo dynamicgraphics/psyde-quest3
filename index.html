@@ -33,7 +33,8 @@
             width: 100%;
             padding: 20px;
             box-sizing: border-box;
-            background: #222 url('https://i.imgur.com/V9Jvj2b.png') repeat; /* Pixelated stone texture */
+            /* Updated background image */
+            background: #222 url('https://res.cloudinary.com/dvf40x79k/image/upload/v1708645009/dungeon_tile_bg_y3j86m.png') repeat; 
         }
         
         /* --- Screen Styling --- */
@@ -44,6 +45,11 @@
             align-items: center;
             width: 100%;
             max-width: 400px;
+            background-color: rgba(0,0,0,0.7); /* Dark overlay for readability */
+            padding: 20px;
+            border: 4px solid #fff;
+            box-shadow: 0 0 15px rgba(255,255,255,0.5);
+            margin: 10px;
         }
         
         #start-screen {
@@ -54,15 +60,14 @@
             font-size: 2em;
             color: #FFFF00; /* Yellow title */
             text-shadow: 3px 3px #AA5D00; /* Brownish shadow for retro feel */
+            margin-bottom: 20px;
         }
 
         p {
             font-size: 0.8em;
             line-height: 1.5;
-            margin: 20px 0;
-            background-color: rgba(0,0,0,0.7);
-            padding: 10px;
-            border: 2px solid #fff;
+            margin: 10px 0;
+            padding: 5px;
         }
         
         /* --- Buttons --- */
@@ -74,6 +79,7 @@
             font-family: 'Press Start 2P', cursive;
             cursor: pointer;
             box-shadow: 4px 4px #222;
+            margin-top: 20px;
         }
 
         button:active {
@@ -90,6 +96,7 @@
             border: 4px solid #fff;
             box-shadow: 0 0 10px #000;
             background-color: #000;
+            margin-bottom: 10px; /* Space between map and hint text */
         }
 
     </style>
@@ -124,7 +131,7 @@
         let playerMarker;
         // This is a custom icon for our player
         const playerIcon = L.icon({
-            iconUrl: 'https://i.imgur.com/pBQK5a5.png', // 8-bit hero sprite
+            iconUrl: 'https://res.cloudinary.com/dvf40x79k/image/upload/v1708645009/player_sprite_nes_kewjrg.png', // Updated 8-bit hero sprite
             iconSize: [24, 32], 
             iconAnchor: [12, 32], 
         });
@@ -172,14 +179,14 @@
 
             // Create the map, centered on the player's initial location
             map = L.map(mapContainer, {
-                zoomControl: false, // Hide the +/- zoom buttons
-                scrollWheelZoom: false // Disable zoom via scroll
-            }).setView([lat, lon], 19); // 19 is a very high zoom level, good for walking
+                zoomControl: false, 
+                scrollWheelZoom: false 
+            }).setView([lat, lon], 19); 
 
-            // We are using a dark, retro-style map theme from Stadia Maps
-            L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
+            // Using CartoDB Dark Matter tiles - no API key needed
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
                 maxZoom: 20,
-                attribution: '&copy; Stadia Maps, &copy; OpenMapTiles &copy; OpenStreetMap'
+                attribution: '&copy; <a href="https://carto.com/attributions">CartoDB</a>, &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(map);
 
             // Add the player marker to the map
