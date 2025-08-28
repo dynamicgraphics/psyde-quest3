@@ -16,7 +16,7 @@
         #game-ui { display: none; width: 100%; height: 100%; opacity: 1; transition: opacity 0.5s; pointer-events: none; }
         #game-ui > * { pointer-events: all; }
 
-        #sidebar {
+       #sidebar {
             position: absolute; top: 50%; left: 20px;
             transform: translateY(-50%);
             display: flex; flex-direction: column;
@@ -27,13 +27,16 @@
         .sidebar-slot {
             width: 40px; height: 40px;
             margin: 5px 0;
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="%23555" stroke-width="8"/><text x="50" y="65" font-size="40" text-anchor="middle" fill="%23555" font-family="monospace">?</text></svg>');
+            background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/coin.png');
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
+            filter: grayscale(100%) brightness(50%) opacity(0.5); /* Ghosted effect */
+            transition: filter 0.3s ease;
+            image-rendering: pixelated; /* Ensures pixel art stays sharp */
         }
         .sidebar-slot.captured {
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="%23FFD700" stroke="%23FFA500" stroke-width="5"/><text x="50" y="70" font-size="50" text-anchor="middle" fill="white" font-family="monospace">$</text></svg>');
+            filter: grayscale(0%) brightness(100%) opacity(1); /* Full color when captured */
         }
         
         #coin-container {
@@ -41,27 +44,27 @@
             transform: translate(-50%, -50%);
             width: 150px; height: 150px;
             z-index: 50;
+            filter: grayscale(100%) brightness(50%) opacity(0.5); /* Ghosted by default */
+            transition: filter 0.5s linear;
+            image-rendering: pixelated; /* Ensures pixel art stays sharp */
         }
-        #coin-outline, #coin-fill {
+        #coin-image {
             position: absolute; top: 0; left: 0;
             width: 100%; height: 100%;
+            background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/coin.png');
             background-size: contain;
             background-repeat: no-repeat;
             background-position: center;
-        }
-        #coin-outline {
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="white" stroke-width="8" opacity="0.5"/></svg>');
-        }
-        #coin-fill {
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="%23FFD700"/></svg>');
             clip-path: inset(100% 0 0 0); /* Fills from bottom up */
             transition: clip-path 0.5s linear;
         }
-        #coin-container.active #coin-fill {
-            clip-path: inset(0% 0 0 0);
-        }
+
         #coin-container.active {
+            filter: grayscale(0%) brightness(100%) opacity(1); /* Full color */
             animation: pulse-rotate 2s infinite;
+        }
+        #coin-container.active #coin-image {
+             clip-path: inset(0% 0 0 0); /* Fully filled */
         }
 
         @keyframes pulse-rotate {
