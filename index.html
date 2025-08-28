@@ -7,163 +7,151 @@
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         :root {
-            --pixel-border-image: url('data:image/svg+xml;utf8,<?xml version="1.0" encoding="UTF-8" ?><svg version="1.1" width="9" height="9" xmlns="http://www.w3.org/2000/svg"><path d="M3,0 H6 V3 H9 V6 H6 V9 H3 V6 H0 V3 H3 Z" fill-rule="evenodd" fill="white" /></svg>');
+            --coin-url: url('https://storage.googleapis.com/gemini-prod/images/85611a1d-a077-4402-be5a-4e63f8582772');
+            --map-border-url: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/circle.png');
+            --sidebar-border-url: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/rectangle%20horizontal.svg');
+            --background-url: url('https://res.cloudinary.com/dvf40x79k/image/upload/v1708645009/dungeon_tile_bg_y3j86m.png');
         }
+        
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%;
             overflow: hidden; background-color: #000;
-            font-family: 'Press Start 2P', cursive;
-            color: white;
+            font-family: 'Press Start 2P', cursive; color: white;
+            image-rendering: pixelated;
         }
+
         .hidden { display: none !important; }
-        image-rendering: pixelated;
         
         #game-container {
             position: relative; width: 100%; height: 100%;
-            background: #222 url('https://res.cloudinary.com/dvf40x79k/image/upload/v1708645009/dungeon_tile_bg_y3j86m.png') repeat;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            background-image: var(--background-url); background-repeat: repeat;
+            display: flex; justify-content: center; align-items: center;
         }
 
         /* --- Start Screen --- */
         #start-screen {
-            width: 90%; max-width: 400px;
-            background-color: rgba(0,0,0,0.7);
-            padding: 20px; text-align: center;
-            border: 20px solid; border-image-slice: 3; border-image-width: 20px;
-            border-image-repeat: stretch; border-image-source: var(--pixel-border-image);
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; background-color: rgba(0,0,0,0.7);
+            padding: 30px; border-radius: 10px;
         }
-        #start-screen h1 { color: #FFD700; text-shadow: 2px 2px #AA5D00; }
-        #start-screen img { width: 80px; margin-bottom: 20px; image-rendering: pixelated; }
-        
-        /* --- Game UI --- */
-        #game-ui {
-            position: absolute; top: 0; left: 0;
-            width: 100%; height: 100%;
-            pointer-events: none;
-        }
-        #game-ui > * { pointer-events: all; }
-        
-        #mini-map {
-            position: absolute; top: 20px; left: 20px;
-            width: 150px; height: 150px;
-        }
-        #mini-map-border {
-            width: 100%; height: 100%;
-            background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/circle.png');
-            background-size: contain; filter: invert(100%); image-rendering: pixelated;
-        }
-        #mini-map-content {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: calc(100% - 30px); height: calc(100% - 30px);
-            background-color: rgba(0,0,0,0.8); border-radius: 50%; overflow: hidden;
-        }
-        #player-sprite {
-            position: absolute; top: 50%; left: 50%;
-            width: 16px; height: 24px;
-            transform: translate(-50%, -50%) scale(2);
-            background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/new_mervin.png');
-            image-rendering: pixelated; z-index: 2;
-        }
-        #beacon-dot {
-            position: absolute; width: 16px; height: 16px; z-index: 3;
-            background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAFUlEQVQYV2NkYGD4z4AR/F/yG6gBADtnARMk2c46AAAAAElFTkSuQmCC');
-            background-size: contain; image-rendering: pixelated;
-        }
-
-        #sidebar {
-            position: absolute; top: 50%; right: 20px; transform: translateY(-50%);
-            width: 80px; height: 320px;
-        }
-        #sidebar-frame {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/rectangle%20horizontal.svg');
-            background-size: 100% 100%; filter: invert(100%);
-            transform: rotate(90deg) scaleY(1.5); image-rendering: pixelated;
-        }
-        #sidebar-content {
-            position: relative; width: 100%; height: 100%;
-            display: flex; flex-direction: column; justify-content: space-evenly; align-items: center;
-        }
-        .sidebar-slot {
-            width: 40px; height: 40px;
-            background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/coin.png');
-            background-size: contain; background-repeat: no-repeat; background-position: center;
-            filter: grayscale(100%) brightness(50%) opacity(0.5); image-rendering: pixelated;
-        }
-        .sidebar-slot.captured { filter: grayscale(0%) brightness(100%) opacity(1); }
-        
-        #coin-container {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 150px; height: 150px; image-rendering: pixelated;
-        }
-        #coin-outline, #coin-fill {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/coin.png');
-            background-size: contain; background-repeat: no-repeat; background-position: center;
-        }
-        #coin-outline { filter: grayscale(100%) brightness(50%) opacity(0.5); }
-        #coin-fill { clip-path: inset(100% 0 0 0); }
-
-        #bottom-bar {
-            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
-            width: 90%; max-width: 400px;
-        }
-        #instruction-text {
-            background-color: rgba(0,0,0,0.8); border: 3px solid #fff; 
-            padding: 15px; font-size: 0.8em;
-        }
+        #start-screen h1 { color: #FFD700; text-shadow: 2px 2px #AA5D00; font-size: 1.5em; }
+        #start-screen img { width: 80px; margin-bottom: 20px; }
+        #start-screen p { font-size: 0.8em; margin: 20px 0; }
         button {
             background-color: #555; color: #fff; border: 3px solid #fff;
             padding: 15px 25px; font-family: 'Press Start 2P', cursive; cursor: pointer;
         }
+
+        /* --- Game UI (Stable Flexbox Layout) --- */
+        #game-ui {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: flex; flex-direction: column;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+        .ui-row {
+            width: 100%; display: flex;
+            justify-content: space-between;
+            padding: 20px; box-sizing: border-box;
+        }
+        .ui-row.top { align-items: flex-start; }
+        .ui-row.bottom { align-items: flex-end; }
+        #center-content { flex-grow: 1; display: flex; justify-content: center; align-items: center; }
+        #game-ui > * { pointer-events: all; }
+
+        /* --- Components --- */
+        #mini-map { width: 150px; height: 150px; position: relative; }
+        #mini-map-border { width: 100%; height: 100%; background-image: var(--map-border-url); background-size: contain; filter: invert(100%); }
+        #mini-map-content {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: calc(100% - 30px); height: calc(100% - 30px);
+            background-color: rgba(0,0,0,0.8); border-radius: 50%;
+        }
+
+        #sidebar { width: 80px; height: 320px; position: relative; }
+        #sidebar-frame {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: var(--sidebar-border-url);
+            background-size: 100% 100%; filter: invert(100%);
+            transform: rotate(90deg) scaleY(1.5);
+        }
+        #sidebar-content {
+            position: relative; width: 100%; height: 100%;
+            display: flex; flex-direction: column;
+            justify-content: space-evenly; align-items: center;
+        }
+        .sidebar-slot {
+            width: 40px; height: 40px; background-image: var(--coin-url);
+            background-size: contain;
+            filter: grayscale(100%) brightness(50%) opacity(0.5);
+        }
         
+        #coin-container { width: 150px; height: 150px; position: relative; }
+        #coin-outline, #coin-fill {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-image: var(--coin-url);
+            background-size: contain;
+        }
+        #coin-outline { filter: grayscale(100%) brightness(50%) opacity(0.5); }
+        
+        #instruction-text {
+            width: 90%; max-width: 400px;
+            background-color: rgba(0,0,0,0.8);
+            border: 3px solid #fff;
+            padding: 15px; font-size: 0.8em;
+        }
     </style>
 </head>
 <body>
     <div id="game-container">
         
-        <div id="start-screen" class="screen">
-            <div id="start-box" class="pixel-border">
-                <img src="https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/coin.png" alt="Quest Coin">
+        <div id="start-screen" class="">
+            <div id="start-box" class="">
+                <img src="https://storage.googleapis.com/gemini-prod/images/85611a1d-a077-4402-be5a-4e63f8582772" alt="Quest Coin">
                 <h1>Psyde Quest</h1>
                 <p>Your adventure awaits...</p>
                 <button id="start-button">Begin</button>
             </div>
         </div>
 
-        <div id="game-ui" class="screen hidden">
-            <div id="mini-map">
-                <div id="mini-map-border"></div>
-                <div id="mini-map-content">
-                    <div id="player-sprite"></div>
-                    <div id="beacon-dot"></div>
+        <div id="game-ui" class="hidden">
+            <div class="ui-row top">
+                <div id="mini-map">
+                    <div id="mini-map-border"></div>
+                    <div id="mini-map-content"></div>
+                </div>
+                <div style="width: 40px; height: 40px;"></div>
+            </div>
+
+            <div id="center-content">
+                <div id="coin-container">
+                    <div id="coin-outline"></div>
+                    <div id="coin-fill"></div>
                 </div>
             </div>
-            <div id="sidebar">
-                <div id="sidebar-frame"></div>
-                <div id="sidebar-content">
-                    <div class="sidebar-slot"></div>
-                    <div class="sidebar-slot"></div>
-                    <div class="sidebar-slot"></div>
-                    <div class="sidebar-slot"></div>
-                    <div class="sidebar-slot"></div>
+
+            <div class="ui-row bottom">
+                <div style="width: 80px;"></div>
+                <div id="instruction-text">Initializing...</div>
+                <div id="sidebar">
+                    <div id="sidebar-frame"></div>
+                    <div id="sidebar-content">
+                        <div class="sidebar-slot"></div>
+                        <div class="sidebar-slot"></div>
+                        <div class="sidebar-slot"></div>
+                        <div class="sidebar-slot"></div>
+                        <div class="sidebar-slot"></div>
+                    </div>
                 </div>
             </div>
-            <div id="coin-container">
-                <div id="coin-outline"></div>
-                <div id="coin-fill"></div>
-            </div>
-            <div id="bottom-bar">
-                 <p id="instruction-text">Initializing...</p>
-                 </div>
         </div>
 
     </div>
     <script>
         // No JavaScript logic in this step.
-        // We are only confirming the visual layout.
-    </script>
+        // This is ONLY for confirming the visual layout is 100% correct.
+    </pre>
 </body>
 </html>
