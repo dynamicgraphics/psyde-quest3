@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         :root {
-            --coin-url: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/coin-v2.png');
+            --coin-url: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/coin-v1.png');
             --map-border-url: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/circle.png');
             --sidebar-border-url: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/rectangle%20horizontal.svg');
             --background-url: url('https://res.cloudinary.com/dvf40x79k/image/upload/v1708645009/dungeon_tile_bg_y3j86m.png');
@@ -92,12 +92,20 @@
             filter: grayscale(100%) brightness(50%) opacity(0.5);
         }
         
-        #coin-container { width: 150px; height: 150px; position: relative; }
+        #coin-container {
+            /* UPDATED: Increased size */
+            width: 600px; height: 600px;
+            position: relative;
+            /* NEW: Added floating animation */
+            animation: float 6s ease-in-out infinite;
+        }
         #coin-outline, #coin-fill {
             position: absolute; top: 0; left: 0;
             width: 100%; height: 100%;
             background-image: var(--coin-url);
             background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
         }
         #coin-outline { filter: grayscale(100%) brightness(50%) opacity(0.5); }
         
@@ -107,6 +115,13 @@
             border: 3px solid #fff;
             padding: 15px; font-size: 0.8em;
         }
+
+        /* NEW: Keyframes for the floating animation */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
         
     </style>
 </head>
@@ -115,7 +130,7 @@
         
         <div id="start-screen" class="">
             <div id="start-box" class="">
-                <img src="https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/coin-v2.png" alt="Quest Coin">
+                <img src="https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/coin-v1.png" alt="Quest Coin">
                 <h1>Psyde Quest</h1>
                 <p>Your adventure awaits...</p>
                 <button id="start-button">Begin</button>
@@ -128,16 +143,14 @@
                     <div id="mini-map-border"></div>
                     <div id="mini-map-content"></div>
                 </div>
-                <div style="width: 40px; height: 40px;"></div>
+                 <div></div>
             </div>
-
             <div id="center-content">
                 <div id="coin-container">
                     <div id="coin-outline"></div>
                     <div id="coin-fill"></div>
                 </div>
             </div>
-
             <div class="ui-row bottom">
                 <div style="width: 80px;"></div>
                 <div id="instruction-text">
