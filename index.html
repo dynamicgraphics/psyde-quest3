@@ -90,7 +90,7 @@
             position: absolute; top: 20px; left: 20px;
             width: 150px; height: 150px;
             z-index: 100; transition: all 0.5s ease-in-out;
-            padding: 4px; /* Give some space for the border image */
+            padding: 4px;
             border: 20px solid transparent;
             border-image-source: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/circle.png');
             border-image-slice: 20;
@@ -103,9 +103,33 @@
             background-color: rgba(0,0,0,0.8);
             border-radius: 50%;
             position: relative;
+            overflow: hidden; /* Keep the cone inside */
         }
         #mini-map-container.shrunk { width: 100px; height: 100px; }
-        #player-arrow { position: absolute; top: 50%; left: 50%; width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-bottom: 24px solid #FFFFFF; transform: translate(-50%, -60%); transition: transform 0.2s linear; }
+        
+        #player-fov-cone {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-left: 60px solid transparent;
+            border-right: 60px solid transparent;
+            border-top: 60px solid rgba(0, 150, 255, 0.3); /* Default blue */
+            transform-origin: 50% 100%;
+            transform: translate(-50%, -110%) rotate(180deg);
+            transition: border-top-color 0.5s ease;
+        }
+        #player-fov-cone.hot {
+            border-top-color: rgba(255, 0, 0, 0.4); /* Red "hot" color */
+        }
+
+        #player-arrow { 
+            position: absolute; top: 50%; left: 50%; z-index: 2;
+            width: 0; height: 0; 
+            border-left: 8px solid transparent; border-right: 8px solid transparent; border-bottom: 24px solid #FFFFFF; 
+            transform: translate(-50%, -60%); transition: transform 0.2s linear; 
+        }
         #beacon-dot { position: absolute; width: 15px; height: 15px; background-color: #FF0000; border-radius: 50%; border: 2px solid #fff; }
         #instruction-text { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; background-color: rgba(0,0,0,0.8); border: 3px solid #fff; padding: 15px; font-size: 0.8em; opacity: 1; transition: opacity 0.5s ease-in-out; }
         #instruction-text.fade-out { opacity: 0; }
@@ -138,6 +162,7 @@
             </div>
             <div id="mini-map-container">
                 <div id="mini-map-container-inner">
+                    <div id="player-fov-cone"></div>
                     <div id="player-arrow"></div>
                     <div id="beacon-dot"></div>
                 </div>
@@ -183,6 +208,7 @@
             const coinFill = document.getElementById('coin-fill');
             const sidebarSlots = document.querySelectorAll('.sidebar-slot');
             const feedbackOverlay = document.getElementById('feedback-overlay');
+            const playerFovCone = document.getElementById('player-fov-cone');
 
             const SECRET_CODE = "ORION";
             const targetBeacon = { lat: 32.5362, lon: -97.3239 }; 
@@ -194,6 +220,7 @@
             let targetArrowAngle = 0;
             let instructionTimeout;
             let beaconsCaptured = 0;
+            let beaconBearing = 0;
 
             startButton.addEventListener('click', startButtonClickHandler);
             activateArButton.addEventListener('click', activateAR);
@@ -233,6 +260,16 @@
             function updateArrowRotation() {
                 currentArrowAngle = lerpAngle(currentArrowAngle, targetArrowAngle, 0.1);
                 playerArrow.style.transform = `translate(-50%, -60%) rotate(${currentArrowAngle}deg)`;
+                
+                let angleDiff = Math.abs(beaconBearing - currentArrowAngle);
+                if (angleDiff > 180) angleDiff = 360 - angleDiff;
+
+                if (angleDiff < 45) {
+                    playerFovCone.classList.add('hot');
+                } else {
+                    playerFovCone.classList.remove('hot');
+                }
+
                 requestAnimationFrame(updateArrowRotation);
             }
 
@@ -242,9 +279,9 @@
 
                 feedbackOverlay.className = '';
                 if (distance > ACTIVATION_DISTANCE_METERS) {
-                    if (previousDistance - distance > 1) { // Moved >1m closer
+                    if (previousDistance - distance > 1) {
                         feedbackOverlay.classList.add('pulse-red');
-                    } else if (distance - previousDistance > 1) { // Moved >1m farther
+                    } else if (distance - previousDistance > 1) {
                         feedbackOverlay.classList.add('pulse-blue');
                     }
                 }
@@ -327,9 +364,9 @@
             }
 
             function updateBeaconDot(playerLat, playerLon, beaconLat, beaconLon) {
-                const bearing = getBearing(playerLat, playerLon, beaconLat, beaconLon);
-                const angle = bearing * (Math.PI / 180);
-                const mapRadius = miniMap.classList.contains('shrunk') ? 35 : 60; // Adjusted for new border
+                beaconBearing = getBearing(playerLat, playerLon, beaconLat, beaconLon);
+                const angle = beaconBearing * (Math.PI / 180);
+                const mapRadius = miniMap.classList.contains('shrunk') ? 35 : 60;
                 const x = mapRadius * Math.sin(angle);
                 const y = -mapRadius * Math.cos(angle);
                 beaconDot.style.left = `calc(50% + ${x}px - 7.5px)`;
