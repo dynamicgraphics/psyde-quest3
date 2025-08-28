@@ -8,130 +8,56 @@
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
     <style>
-        :root {
-            --pixel-border-image: url('data:image/svg+xml;utf8,<?xml version="1.0" encoding="UTF-8" ?><svg version="1.1" width="9" height="9" xmlns="http://www.w3.org/2000/svg"><path d="M3,0 H6 V3 H9 V6 H6 V9 H3 V6 H0 V3 H3 Z" fill-rule="evenodd" fill="white" /></svg>');
-        }
-        body, html {
-            margin: 0; padding: 0; width: 100%; height: 100%;
-            overflow: hidden; background-color: #000;
-            font-family: 'Press Start 2P', cursive;
-            color: white;
-        }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #000; font-family: 'Press Start 2P', cursive; color: white; }
         .hidden { display: none !important; }
-        .pixel-border {
-            border: 20px solid; border-image-slice: 3; border-image-width: 20px;
-            border-image-repeat: stretch; border-image-source: var(--pixel-border-image);
-            image-rendering: pixelated;
-        }
+        image-rendering: pixelated;
         
-        #game-container {
-            position: relative; width: 100%; height: 100%;
-            background: #222 url('https://res.cloudinary.com/dvf40x79k/image/upload/v1708645009/dungeon_tile_bg_y3j86m.png') repeat;
-        }
-        .screen {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            display: flex; justify-content: center; align-items: center;
-        }
+        #game-container { position: relative; width: 100%; height: 100%; background: #222 url('https://res.cloudinary.com/dvf40x79k/image/upload/v1708645009/dungeon_tile_bg_y3j86m.png') repeat; }
+        .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
 
         /* --- Start Screen --- */
-        #start-screen .start-box {
-            width: 90%; max-width: 400px;
-            background-color: rgba(0,0,0,0.7);
-            padding: 20px; text-align: center;
-        }
+        #start-screen .start-box { text-align: center; background-color: rgba(0,0,0,0.5); padding: 20px; border-radius: 10px; }
         #start-screen h1 { color: #FFD700; text-shadow: 2px 2px #AA5D00; }
         #start-screen img { width: 80px; margin-bottom: 20px; image-rendering: pixelated; }
 
-        /* --- Game UI --- */
-        #game-ui {
-            width: 100%; height: 100%;
-            pointer-events: none;
-        }
+        /* --- New Flexbox Layout --- */
+        #game-ui { display: flex; flex-direction: column; justify-content: space-between; width: 100%; height: 100%; pointer-events: none; }
+        #top-bar, #bottom-bar { display: flex; justify-content: space-between; align-items: flex-start; width: 100%; padding: 20px; box-sizing: border-box; }
+        #bottom-bar { align-items: flex-end; }
+        #center-content { flex-grow: 1; display: flex; justify-content: center; align-items: center; }
         #game-ui > * { pointer-events: all; }
-        
-        #mini-map {
-            position: absolute; top: 20px; left: 20px;
-            width: 150px; height: 150px; transition: all 0.5s ease-in-out;
-            z-index: 20;
-        }
-        #mini-map.shrunk { width: 100px; height: 100px; }
-        #mini-map-border {
-            width: 100%; height: 100%;
-            background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/circle.png');
-            background-size: contain; filter: invert(100%); image-rendering: pixelated;
-        }
-        #mini-map-content {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: calc(100% - 30px); height: calc(100% - 30px);
-            background-color: rgba(0,0,0,0.8); border-radius: 50%; overflow: hidden;
-        }
-        #player-container {
-            position: absolute; top: 50%; left: 50%;
-            width: 1px; height: 1px;
-            transform: translate(-50%, -50%);
-            z-index: 2;
-        }
-        #player-sprite {
-            position: absolute; top: 0; left: 0;
-            width: 16px; height: 24px;
-            transform: translate(-50%, -50%) scale(2);
-            background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/new_mervin.png');
-            image-rendering: pixelated;
-        }
-        #beacon-dot {
-            position: absolute; width: 16px; height: 16px; z-index: 3;
-            background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUEUgAAAAgAAAAICAYAAADED76LAAAAFUlEQVQYV2NkYGD4z4AR/F/yG6gBADtnARMk2c46AAAAAElFTkSuQmCC');
-            background-size: contain; image-rendering: pixelated;
-        }
 
-        #sidebar {
-            position: absolute; top: 50%; right: 20px; transform: translateY(-50%);
-            width: 80px; height: 320px; z-index: 20;
-        }
-        #sidebar-frame {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/rectangle%20horizontal.svg');
-            background-size: 100% 100%; filter: invert(100%);
-            transform: rotate(90deg) scaleY(1.5); image-rendering: pixelated;
-        }
-        #sidebar-content {
-            position: relative; width: 100%; height: 100%;
-            display: flex; flex-direction: column; justify-content: space-evenly; align-items: center;
-        }
-        .sidebar-slot {
-            width: 40px; height: 40px;
-            background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/coin.png');
-            background-size: contain; background-repeat: no-repeat; background-position: center;
-            filter: grayscale(100%) brightness(50%) opacity(0.5); image-rendering: pixelated;
-        }
+        /* --- Map & Settings --- */
+        #mini-map { position: relative; width: 150px; height: 150px; transition: all 0.5s ease-in-out; }
+        #mini-map.shrunk { width: 100px; height: 100px; }
+        #mini-map-border { width: 100%; height: 100%; background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/circle.png'); background-size: contain; filter: invert(100%); image-rendering: pixelated; }
+        #mini-map-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: calc(100% - 30px); height: calc(100% - 30px); background-color: rgba(0,0,0,0.8); border-radius: 50%; overflow: hidden; }
+        #player-container { position: absolute; top: 50%; left: 50%; width: 1px; height: 1px; transform: translate(-50%, -50%); z-index: 2; }
+        #player-sprite { position: absolute; top: 0; left: 0; width: 16px; height: 24px; transform: translate(-50%, -50%) scale(2); background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/new_mervin.png'); image-rendering: pixelated; }
+        #player-fov-cone { position: absolute; top: -40px; left: 50%; transform: translateX(-50%); width: 40px; height: 30px; background: radial-gradient(circle at 50% 0%, rgba(0,150,255,0.4) 0%, rgba(0,150,255,0) 70%); border-radius: 50%; transition: background 0.5s ease; }
+        #player-fov-cone.hot { background: radial-gradient(circle at 50% 0%, rgba(255,0,0,0.5) 0%, rgba(255,0,0,0) 70%); }
+        #beacon-dot { position: absolute; width: 16px; height: 16px; z-index: 3; background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAFUlEQVQYV2NkYGD4z4AR/F/yG6gBADtnARMk2c46AAAAAElFTkSuQmCC'); background-size: contain; image-rendering: pixelated; }
+
+        #settings-button { font-size: 24px; width: 40px; height: 40px; line-height: 40px; background-color: rgba(0,0,0,0.5); border-radius: 5px; }
+        #settings-menu { position: absolute; top: 70px; right: 20px; background-color: rgba(0,0,0,0.8); padding: 10px; border: 3px solid white; }
+        
+        /* --- Sidebar & Coin --- */
+        #sidebar { position: relative; width: 80px; height: 320px; }
+        #sidebar-frame { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/rectangle%20horizontal.svg'); background-size: 100% 100%; filter: invert(100%); transform: rotate(90deg) scaleY(1.5); image-rendering: pixelated; }
+        #sidebar-content { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-evenly; align-items: center; }
+        .sidebar-slot { width: 40px; height: 40px; background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/coin.png'); background-size: contain; background-repeat: no-repeat; background-position: center; filter: grayscale(100%) brightness(50%) opacity(0.5); image-rendering: pixelated; }
         .sidebar-slot.captured { filter: grayscale(0%) brightness(100%) opacity(1); }
         
-        #coin-container {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 150px; height: 150px; image-rendering: pixelated; z-index: 15;
-        }
-        #coin-outline, #coin-fill {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/coin.png');
-            background-size: contain; background-repeat: no-repeat; background-position: center;
-        }
+        #coin-container { position: relative; width: 150px; height: 150px; image-rendering: pixelated; }
+        #coin-outline, #coin-fill { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/coin.png'); background-size: contain; background-repeat: no-repeat; background-position: center; }
         #coin-outline { filter: grayscale(100%) brightness(50%) opacity(0.5); }
         #coin-fill { clip-path: inset(100% 0 0 0); transition: clip-path 0.5s linear; }
         #coin-container.active { animation: pulse-rotate 2s infinite; }
         #coin-container.active #coin-fill { clip-path: inset(0% 0 0 0); }
-        @keyframes pulse-rotate { 0% { transform: translate(-50%,-50%) scale(1) rotateY(0deg); } 50% { transform: translate(-50%,-50%) scale(1.1) rotateY(180deg); } 100% { transform: translate(-50%,-50%) scale(1) rotateY(360deg); } }
+        @keyframes pulse-rotate { 0% { transform: scale(1) rotateY(0deg); } 50% { transform: scale(1.1) rotateY(180deg); } 100% { transform: scale(1) rotateY(360deg); } }
 
-        #bottom-bar {
-            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
-            width: 100%; z-index: 20;
-        }
-        #instruction-text {
-            width: 90%; max-width: 400px; background-color: rgba(0,0,0,0.8);
-            border: 3px solid #fff; padding: 15px; font-size: 0.8em; margin: 0 auto 10px auto;
-            opacity: 0; transition: opacity 0.5s ease-in-out;
-        }
+        #instruction-text { width: 90%; max-width: 400px; background-color: rgba(0,0,0,0.8); border: 3px solid #fff; padding: 15px; font-size: 0.8em; margin: 0 auto 10px auto; opacity: 0; transition: opacity 0.5s ease-in-out; }
         #instruction-text.visible { opacity: 1; }
-        #instruction-text.fade-out { opacity: 0; }
         button { background-color: #555; color: #fff; border: 3px solid #fff; padding: 15px 25px; font-family: 'Press Start 2P', cursive; cursor: pointer; }
         input { font-family: 'Press Start 2P', cursive; padding: 10px; font-size: 1em; }
         
@@ -144,7 +70,7 @@
         <div id="feedback-overlay"></div>
 
         <div id="start-screen" class="screen">
-            <div class="start-box pixel-border">
+            <div class="start-box">
                 <img src="https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/coin.png" alt="Quest Coin">
                 <h1>Psyde Quest</h1>
                 <p>Your adventure awaits...</p>
@@ -153,36 +79,49 @@
         </div>
 
         <div id="game-ui" class="screen hidden">
-            <div id="mini-map">
-                <div id="mini-map-border"></div>
-                <div id="mini-map-content">
-                    <div id="player-container">
-                         <div id="player-sprite"></div>
+            <div id="top-bar">
+                <div id="mini-map">
+                    <div id="mini-map-border"></div>
+                    <div id="mini-map-content">
+                        <div id="player-container">
+                             <div id="player-fov-cone"></div>
+                             <div id="player-sprite"></div>
+                        </div>
+                        <div id="beacon-dot"></div>
                     </div>
-                    <div id="beacon-dot"></div>
+                </div>
+                <div id="settings-container">
+                    <button id="settings-button">⚙</button>
+                    <div id="settings-menu" class="hidden">
+                        <button id="music-toggle-button">Mute Music</button>
+                    </div>
                 </div>
             </div>
-            <div id="sidebar">
-                <div id="sidebar-frame"></div>
-                <div id="sidebar-content">
-                    <div class="sidebar-slot"></div> <div class="sidebar-slot"></div> <div class="sidebar-slot"></div>
-                    <div class="sidebar-slot"></div> <div class="sidebar-slot"></div>
+            <div id="center-content">
+                 <div id="coin-container">
+                    <div id="coin-outline"></div>
+                    <div id="coin-fill"></div>
                 </div>
             </div>
-            <div id="coin-container">
-                <div id="coin-outline"></div>
-                <div id="coin-fill"></div>
-            </div>
-            <div id="bottom-bar">
-                 <p id="instruction-text"></p>
-                 <div id="ar-controls" class="hidden">
-                    <button id="activate-ar-button">Activate Camera</button>
+             <div id="bottom-bar">
+                <div id="sidebar">
+                    <div id="sidebar-frame"></div>
+                    <div id="sidebar-content">
+                        <div class="sidebar-slot"></div> <div class="sidebar-slot"></div> <div class="sidebar-slot"></div>
+                        <div class="sidebar-slot"></div> <div class="sidebar-slot"></div>
+                    </div>
                 </div>
-                <div id="puzzle-input-container" class="hidden">
-                    <input type="text" id="puzzle-input" placeholder="Enter Code">
-                    <button id="submit-code-button">Submit</button>
-                </div>
-            </div>
+                 <div style="width: 100%; text-align: center;">
+                    <p id="instruction-text"></p>
+                    <div id="ar-controls" class="hidden">
+                        <button id="activate-ar-button">Activate Camera</button>
+                    </div>
+                    <div id="puzzle-input-container" class="hidden">
+                        <input type="text" id="puzzle-input" placeholder="Enter Code">
+                        <button id="submit-code-button">Submit</button>
+                    </div>
+                 </div>
+                 <div style="width: 80px;"></div> </div>
             <div id="close-ar-button" class="hidden">X</div>
         </div>
         
@@ -209,7 +148,6 @@
                 coinContainer: document.getElementById('coin-container'),
                 coinFill: document.getElementById('coin-fill'),
                 sidebarSlots: document.querySelectorAll('.sidebar-slot'),
-                feedbackOverlay: document.getElementById('feedback-overlay'),
                 arControls: document.getElementById('ar-controls'),
                 activateArButton: document.getElementById('activate-ar-button'),
                 puzzleInputContainer: document.getElementById('puzzle-input-container'),
@@ -217,73 +155,80 @@
                 submitCodeButton: document.getElementById('submit-code-button'),
                 arScene: document.getElementById('ar-scene'),
                 playerSprite: document.getElementById('player-sprite'),
+                playerContainer: document.getElementById('player-container'),
                 closeArButton: document.getElementById('close-ar-button'),
                 music: document.getElementById('background-music'),
+                settingsButton: document.getElementById('settings-button'),
+                settingsMenu: document.getElementById('settings-menu'),
+                musicToggleButton: document.getElementById('music-toggle-button'),
             };
 
             // Game State
             const state = {
                 SECRET_CODE: "ORION",
                 targetBeacon: { lat: 32.56043, lon: -97.31519 }, 
-                ACTIVATION_DISTANCE_METERS: 10,
-                MAX_DISTANCE: 100,
-                previousDistance: Infinity,
                 isStationary: true,
                 compassHeading: 0,
                 beaconsCaptured: 0,
                 animationFrame: 0,
-                frameCounter: 0,
-                instructionTimeout: null,
                 gameInterval: null,
             };
 
-            // Event Listeners
-            dom.startButton.addEventListener('click', startButtonClickHandler);
-            dom.activateArButton.addEventListener('click', activateAR);
-            dom.submitCodeButton.addEventListener('click', submitCode);
-            dom.closeArButton.addEventListener('click', closeAR);
-            
-            function saveProgress() {
-                localStorage.setItem('psydeQuestProgress', JSON.stringify({ beaconsCaptured: state.beaconsCaptured }));
+            function saveState() {
+                localStorage.setItem('psydeQuestState', JSON.stringify({ 
+                    beaconsCaptured: state.beaconsCaptured,
+                    musicMuted: dom.music.muted,
+                }));
             }
 
-            function loadProgress() {
-                const savedData = localStorage.getItem('psydeQuestProgress');
+            function loadState() {
+                const savedData = localStorage.getItem('psydeQuestState');
                 if (savedData) {
-                    const progress = JSON.parse(savedData);
-                    state.beaconsCaptured = progress.beaconsCaptured || 0;
-                    for (let i = 0; i < state.beaconsCaptured; i++) {
-                        dom.sidebarSlots[i].classList.add('captured');
-                    }
+                    const savedState = JSON.parse(savedData);
+                    state.beaconsCaptured = savedState.beaconsCaptured || 0;
+                    dom.music.muted = savedState.musicMuted || false;
+                    updateSidebarUI();
+                    updateMusicButtonUI();
                 }
+            }
+            
+            function updateSidebarUI() {
+                dom.sidebarSlots.forEach((slot, index) => {
+                    if (index < state.beaconsCaptured) {
+                        slot.classList.add('captured');
+                    } else {
+                        slot.classList.remove('captured');
+                    }
+                });
+            }
+
+            function updateMusicButtonUI() {
+                dom.musicToggleButton.textContent = dom.music.muted ? "Unmute" : "Mute";
             }
 
             async function startButtonClickHandler() {
-                 try {
+                try {
+                    // This is a user interaction, so we can now safely try to play audio.
+                    dom.music.play().catch(e => console.log("Audio play failed, waiting for another interaction."));
+                    
                     if (localStorage.getItem('permissionsGranted') !== 'true') {
                          if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                             const permissionState = await DeviceOrientationEvent.requestPermission();
-                            if (permissionState !== 'granted') {
-                                alert("Compass access is required."); return;
-                            }
+                            if (permissionState !== 'granted') { alert("Compass access is required."); return; }
                         }
-                        if (!('geolocation' in navigator)) {
-                            alert("Geolocation is not supported."); return;
-                        }
-                        await new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }));
+                        if (!('geolocation' in navigator)) { alert("Geolocation is not supported."); return; }
+                        await new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true }));
                         localStorage.setItem('permissionsGranted', 'true');
                     }
                     startGame();
                 } catch (error) {
-                    console.error("Permission error:", error);
-                    alert("Permissions are required to play. Please refresh and try again.");
+                    alert("Permissions are required to play.");
                 }
             }
 
             function startGame() {
                 dom.startScreen.classList.add('hidden');
                 dom.gameUi.classList.remove('hidden');
-                dom.music.play();
                 updateInstructionText("Follow the red dot on your map.", true);
                 window.addEventListener('deviceorientation', handleOrientation);
                 navigator.geolocation.watchPosition(handlePositionUpdate, (err) => console.error(err), { enableHighAccuracy: true });
@@ -295,6 +240,7 @@
             }
             
             function gameLoop() {
+                // Sprite Animation
                 const direction = getDirectionFromAngle(state.compassHeading);
                 let row = 0;
                 switch(direction) {
@@ -303,11 +249,7 @@
                 }
                 let column = state.isStationary ? 0 : state.animationFrame;
                 dom.playerSprite.style.backgroundPosition = `-${column * 16}px -${row * 24}px`;
-                state.frameCounter++;
-                if (state.frameCounter > 2) {
-                    state.animationFrame = (state.animationFrame + 1) % 4;
-                    state.frameCounter = 0;
-                }
+                state.animationFrame = (state.animationFrame + 1) % 4;
             }
             
             function getDirectionFromAngle(angle) {
@@ -322,17 +264,12 @@
                 const distance = getDistance(latitude, longitude, state.targetBeacon.lat, state.targetBeacon.lon);
 
                 state.isStationary = Math.abs(distance - state.previousDistance) < 1;
-                dom.feedbackOverlay.className = '';
-                if (!state.isStationary && distance > state.ACTIVATION_DISTANCE_METERS) {
-                    if (distance < state.previousDistance) dom.feedbackOverlay.classList.add('pulse-red');
-                    else dom.feedbackOverlay.classList.add('pulse-blue');
-                }
                 
-                let fillPercent = 100 - ((distance - state.ACTIVATION_DISTANCE_METERS) / (state.MAX_DISTANCE - state.ACTIVATION_DISTANCE_METERS)) * 100;
+                let fillPercent = 100 - ((distance - 10) / (100 - 10)) * 100;
                 fillPercent = Math.max(0, Math.min(100, fillPercent));
                 dom.coinFill.style.clipPath = `inset(${100 - fillPercent}% 0 0 0)`;
 
-                if (distance <= state.ACTIVATION_DISTANCE_METERS) {
+                if (distance <= 10) {
                     dom.coinContainer.classList.add('active');
                     dom.miniMap.classList.add('shrunk');
                     updateInstructionText("You're close! A hidden rune is nearby.", true);
@@ -357,7 +294,6 @@
                 try {
                     await dom.arScene.systems["mindar-image-system"].start();
                 } catch (err) {
-                    console.error("Error starting AR:", err);
                     closeAR();
                     alert("Could not activate camera.");
                 }
@@ -370,8 +306,7 @@
                 dom.gameUi.style.opacity = '1';
             }
             
-            const targetEntity = document.getElementById('target-entity');
-            targetEntity.addEventListener("targetFound", () => {
+            document.getElementById('target-entity').addEventListener("targetFound", () => {
                 closeAR();
                 updateInstructionText("You found a secret code!", true);
                 dom.arControls.classList.add('hidden');
@@ -382,12 +317,9 @@
             function submitCode() {
                 if (dom.puzzleInput.value.toUpperCase() === state.SECRET_CODE) {
                     alert("Correct! You've found a beacon!");
-                    if (state.beaconsCaptured < dom.sidebarSlots.length) {
-                        dom.sidebarSlots[state.beaconsCaptured].classList.add('captured');
-                    }
                     state.beaconsCaptured++;
-                    saveProgress();
-
+                    updateSidebarUI();
+                    saveState();
                     if (state.beaconsCaptured >= 5) {
                         alert("Congratulations! You've found all the beacons!");
                     } else {
@@ -421,6 +353,13 @@
                 dom.beaconDot.style.left = `calc(50% + ${x}px - 8px)`;
                 dom.beaconDot.style.top = `calc(50% + ${y}px - 8px)`;
             }
+            
+            dom.settingsButton.addEventListener('click', () => dom.settingsMenu.classList.toggle('hidden'));
+            dom.musicToggleButton.addEventListener('click', () => {
+                dom.music.muted = !dom.music.muted;
+                updateMusicButtonUI();
+                saveState();
+            });
 
             function getDistance(lat1, lon1, lat2, lon2) {
                 const R = 6371e3; const φ1 = lat1 * Math.PI/180; const φ2 = lat2 * Math.PI/180;
@@ -439,7 +378,7 @@
             }
             
             // Initial Load
-            loadProgress();
+            loadState();
         });
     </script>
 </body>
