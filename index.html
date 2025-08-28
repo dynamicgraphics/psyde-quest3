@@ -5,13 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Psyde Quest</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
     <style>
         :root {
             --coin-url: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/coin-v1.png');
-            --map-border-url: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/circle.png');
-            --sidebar-border-url: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/rectangle%20horizontal.svg');
             --background-url: url('https://res.cloudinary.com/dvf40x79k/image/upload/v1708645009/dungeon_tile_bg_y3j86m.png');
         }
         
@@ -26,102 +22,58 @@
         
         #game-container {
             position: relative; width: 100%; height: 100%;
-            background-image: var(--background-url); background-repeat: repeat;
+            background-image: var(--background-url);
             display: flex; justify-content: center; align-items: center;
         }
 
-        /* --- Start Screen --- */
-        #start-screen {
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            text-align: center; background-color: rgba(0,0,0,0.7);
+        .screen {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            display: flex; justify-content: center; align-items: center;
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .box {
+            background-color: rgba(0,0,0,0.7);
             padding: 30px; border-radius: 10px;
         }
-        #start-screen h1 { color: #FFD700; text-shadow: 2px 2px #AA5D00; font-size: 1.5em; }
-        #start-screen img {
-            width: 80px; margin-bottom: 20px;
-            animation: float 6s ease-in-out infinite; /* Floating animation */
+
+        #start-screen h1 { color: #FFD700; text-shadow: 2px 2px #AA5D00; }
+        #start-screen img { width: 80px; margin-bottom: 20px; animation: float 6s ease-in-out infinite; }
+        #start-screen p { margin: 20px 0; }
+        
+        #coin-container {
+            width: 300px; height: 300px;
+            position: relative;
         }
-        #start-screen p { font-size: 0.8em; margin: 20px 0; }
+        #coin-outline, #coin-fill {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: var(--coin-url);
+            background-size: contain; background-repeat: no-repeat; background-position: center;
+        }
+        #coin-outline { filter: grayscale(100%) brightness(50%) opacity(0.5); }
+        #coin-fill { clip-path: inset(100% 0 0 0); transition: clip-path 0.2s linear; }
+        #coin-container.active { animation: active-pulse 2s infinite; }
+
+        #instruction-text {
+            position: absolute; bottom: 20px;
+            width: 90%; max-width: 400px;
+            background-color: rgba(0,0,0,0.8); border: 3px solid #fff;
+            padding: 15px; font-size: 0.8em;
+        }
+        
+        #victory-screen img {
+            width: 200px; height: 200px;
+            border: 5px solid white;
+            margin-top: 20px;
+        }
+
         button {
             background-color: #555; color: #fff; border: 3px solid #fff;
             padding: 15px 25px; font-family: 'Press Start 2P', cursive; cursor: pointer;
         }
 
-        /* --- Game UI (Stable Flexbox Layout) --- */
-        #game-ui {
-            position: absolute; top: 0; left: 0;
-            width: 100%; height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            pointer-events: none;
-        }
-        .ui-row {
-            width: 100%; display: flex;
-            justify-content: space-between;
-            padding: 20px; box-sizing: border-box;
-        }
-        .ui-row.top { align-items: flex-start; }
-        .ui-row.bottom { align-items: flex-end; }
-        #center-content { flex-grow: 1; display: flex; justify-content: center; align-items: center; }
-        #game-ui > * { pointer-events: all; }
-
-        /* --- Components --- */
-        #mini-map { width: 150px; height: 150px; position: relative; }
-        #mini-map-border { width: 100%; height: 100%; background-image: var(--map-border-url); background-size: contain; filter: invert(100%); }
-        #mini-map-content {
-            position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: calc(100% - 30px); height: calc(100% - 30px);
-            background-color: rgba(0,0,0,0.8);
-            border-radius: 50%;
-        }
-
-        #sidebar { width: 80px; height: 320px; position: relative; }
-        #sidebar-frame {
-            position: absolute; top: 0; left: 0;
-            width: 100%; height: 100%;
-            background-image: var(--sidebar-border-url);
-            background-size: 100% 100%; filter: invert(100%);
-            transform: rotate(90deg) scaleY(1.5);
-        }
-        #sidebar-content {
-            position: relative;
-            width: 100%; height: 100%;
-            display: flex; flex-direction: column;
-            justify-content: space-evenly; align-items: center;
-        }
-        .sidebar-slot {
-            width: 40px; height: 40px; background-image: var(--coin-url);
-            background-size: contain;
-            filter: grayscale(100%) brightness(50%) opacity(0.5);
-        }
-        .sidebar-slot.captured { filter: grayscale(0%) brightness(100%) opacity(1); }
-        
-        #coin-container {
-            width: 300px; height: 300px; /* Resized */
-            position: relative;
-        }
-        #coin-outline, #coin-fill {
-            position: absolute; top: 0; left: 0;
-            width: 100%; height: 100%;
-            background-image: var(--coin-url);
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
-        }
-        #coin-outline { filter: grayscale(100%) brightness(50%) opacity(0.5); }
-        #coin-fill { clip-path: inset(100% 0 0 0); transition: clip-path 0.2s linear; }
-        #coin-container.active { animation: active-pulse 2s infinite; }
-        #coin-container.active #coin-fill { clip-path: inset(0% 0 0 0); }
-
-        #instruction-text {
-            width: 90%; max-width: 400px;
-            background-color: rgba(0,0,0,0.8);
-            border: 3px solid #fff;
-            padding: 15px; font-size: 0.8em;
-        }
-        
         @keyframes float {
             0% { transform: translateY(0px); }
             50% { transform: translateY(-10px); }
@@ -132,19 +84,13 @@
             50% { transform: scale(1.1); }
             100% { transform: scale(1); }
         }
-
-        #ar-scene { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; visibility: hidden; }
-        #close-ar-button { position: absolute; top: 20px; right: 20px; z-index: 110; width: 40px; height: 40px; font-size: 24px; line-height: 40px; background-color: rgba(0,0,0,0.5); border: 2px solid white; border-radius: 50%; }
-
     </style>
 </head>
 <body>
-    <audio id="background-music" loop src="https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/Psydequest_Main.mp3"></audio>
-
     <div id="game-container">
         
-        <div id="start-screen" class="">
-            <div id="start-box" class="">
+        <div id="start-screen" class="screen">
+            <div class="box">
                 <img src="https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/coin-v1.png" alt="Quest Coin">
                 <h1>Psyde Quest</h1>
                 <p>Your adventure awaits...</p>
@@ -152,75 +98,57 @@
             </div>
         </div>
 
-        <div id="game-ui" class="hidden">
-            <div class="ui-row top">
-                <div id="mini-map">
-                    <div id="mini-map-border"></div>
-                    <div id="mini-map-content"></div>
-                </div>
-                 <div></div>
+        <div id="game-ui" class="screen hidden">
+            <div id="coin-container">
+                <div id="coin-outline"></div>
+                <div id="coin-fill"></div>
             </div>
-            <div id="center-content">
-                <div id="coin-container">
-                    <div id="coin-outline"></div>
-                    <div id="coin-fill"></div>
-                </div>
-            </div>
-            <div class="ui-row bottom">
-                <div style="width: 80px;"></div>
-                <div id="instruction-text">Initializing...</div>
-                <div id="sidebar">
-                    <div id="sidebar-frame"></div>
-                    <div id="sidebar-content">
-                        <div class="sidebar-slot"></div><div class="sidebar-slot"></div><div class="sidebar-slot"></div>
-                        <div class="sidebar-slot"></div><div class="sidebar-slot"></div>
-                    </div>
-                </div>
+            <p id="instruction-text">Initializing...</p>
+        </div>
+        
+        <div id="victory-screen" class="screen hidden">
+            <div class="box">
+                <h1>VICTORY!</h1>
+                <p>You found the beacon! Show this QR code to claim your prize.</p>
+                <img id="qr-code" src="" alt="Prize QR Code">
             </div>
         </div>
 
-        <a-scene id="ar-scene" mindar-image="imageTargetSrc: https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.mind; autoStart: false; uiScanning: #none;" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
-            </a-scene>
     </div>
-
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // DOM Elements
             const dom = {
                 startScreen: document.getElementById('start-screen'),
                 startButton: document.getElementById('start-button'),
                 gameUi: document.getElementById('game-ui'),
-                music: document.getElementById('background-music'),
+                victoryScreen: document.getElementById('victory-screen'),
+                instructionText: document.getElementById('instruction-text'),
                 coinContainer: document.getElementById('coin-container'),
                 coinFill: document.getElementById('coin-fill'),
-                instructionText: document.getElementById('instruction-text'),
-                arControls: document.createElement('div'), // Will be added dynamically
+                qrCode: document.getElementById('qr-code'),
+            };
+
+            // Game State
+            const state = {
+                gameInterval: null,
             };
             
             // Web Audio API State
             let audioContext;
             let analyser;
             let frequencyData;
-            const TARGET_FREQUENCY = 40000;
-            const ACTIVATION_THRESHOLD = 80;
-            const MAX_SIGNAL = 180;
-
-            let gameInterval = null;
+            const TARGET_FREQUENCY = 1000; // Using an AUDIBLE test frequency
+            const ACTIVATION_THRESHOLD = 120; // Signal strength (0-255) to win
+            const MAX_SIGNAL = 200;
 
             async function startButtonClickHandler() {
                 try {
-                    // This is a user interaction, so we can now safely start audio.
                     await initializeAudio();
-                    
-                    // Request other permissions
-                    if (!('geolocation' in navigator)) {
-                        alert("GPS is not supported on this device."); return;
-                    }
-                    await new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject));
-
                     startGame();
                 } catch (error) {
-                    console.error("Permission error:", error);
-                    alert("This game requires Microphone and GPS permissions to play. Please allow access and refresh the page.");
+                    console.error("Permission or Audio error:", error);
+                    alert("This game requires Microphone access to play. Please allow access and refresh the page.");
                 }
             }
 
@@ -237,16 +165,13 @@
                 if (audioContext.state === 'suspended') {
                     await audioContext.resume();
                 }
-                dom.music.play();
             }
 
             function startGame() {
                 dom.startScreen.classList.add('hidden');
                 dom.gameUi.classList.remove('hidden');
-                dom.music.pause(); // Stop intro music
-                dom.music.currentTime = 0;
                 updateInstructionText("Listen for the beacon's signal...");
-                gameInterval = setInterval(gameLoop, 100);
+                state.gameInterval = setInterval(gameLoop, 100);
             }
 
             function gameLoop() {
@@ -262,12 +187,26 @@
 
                 if (signalStrength > ACTIVATION_THRESHOLD) {
                     dom.coinContainer.classList.add('active');
-                    updateInstructionText("Signal strong! A rune is nearby.");
-                    // In a real game, you would show the AR button here
+                    updateInstructionText("Signal strong! Beacon found!");
+                    
+                    // --- VICTORY ---
+                    // Stop the game loop
+                    clearInterval(state.gameInterval);
+                    // Show victory screen
+                    showVictory();
                 } else {
                     dom.coinContainer.classList.remove('active');
                     updateInstructionText("Listen for the beacon's signal...");
                 }
+            }
+
+            function showVictory() {
+                // Generate a unique QR code for the prize
+                const prizeCode = `PsydeQuest-Winner-${Date.now()}`;
+                dom.qrCode.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(prizeCode)}`;
+                
+                dom.gameUi.classList.add('hidden');
+                dom.victoryScreen.classList.remove('hidden');
             }
             
             function updateInstructionText(message) {
