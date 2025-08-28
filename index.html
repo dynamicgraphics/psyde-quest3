@@ -8,34 +8,134 @@
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
     <style>
-        /* All CSS remains the same */
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #000; font-family: 'Press Start 2P', cursive; }
         #game-container { position: relative; width: 100%; height: 100%; background: #222 url('https://res.cloudinary.com/dvf40x79k/image/upload/v1708645009/dungeon_tile_bg_y3j86m.png') repeat; }
-        #feedback-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; opacity: 0; pointer-events: none; transition: opacity 0.5s ease; }
+        
+        #feedback-overlay {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 1;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
         #feedback-overlay.pulse-red { animation: pulse-red-anim 2s infinite; }
         #feedback-overlay.pulse-blue { animation: pulse-blue-anim 2s infinite; }
-        @keyframes pulse-red-anim { 0% { opacity: 0; background-color: rgba(255,0,0,0.2); } 50% { opacity: 1; background-color: rgba(255,0,0,0.2); } 100% { opacity: 0; background-color: rgba(255,0,0,0.2); } }
-        @keyframes pulse-blue-anim { 0% { opacity: 0; background-color: rgba(0,0,255,0.2); } 50% { opacity: 1; background-color: rgba(0,0,255,0.2); } 100% { opacity: 0; background-color: rgba(0,0,255,0.2); } }
+        @keyframes pulse-red-anim {
+            0% { opacity: 0; background-color: rgba(255,0,0,0.2); }
+            50% { opacity: 1; background-color: rgba(255,0,0,0.2); }
+            100% { opacity: 0; background-color: rgba(255,0,0,0.2); }
+        }
+        @keyframes pulse-blue-anim {
+            0% { opacity: 0; background-color: rgba(0,0,255,0.2); }
+            50% { opacity: 1; background-color: rgba(0,0,255,0.2); }
+            100% { opacity: 0; background-color: rgba(0,0,255,0.2); }
+        }
+
         .ui-element { position: absolute; z-index: 10; color: #fff; text-align: center; width: 100%; }
         #start-screen { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; }
         .start-box { width: 90%; max-width: 400px; background-color: rgba(0,0,0,0.7); padding: 20px; border: 20px solid; border-image-slice: 3; border-image-width: 20px; border-image-repeat: stretch; border-image-source: url('data:image/svg+xml;utf8,<?xml version="1.0" encoding="UTF-8" ?><svg version="1.1" width="9" height="9" xmlns="http://www.w3.org/2000/svg"><path d="M3,0 H6 V3 H9 V6 H6 V9 H3 V6 H0 V3 H3 Z" fill-rule="evenodd" fill="white" /></svg>'); image-rendering: pixelated; }
         #game-ui { display: none; width: 100%; height: 100%; opacity: 1; transition: opacity 0.5s; pointer-events: none; }
         #game-ui > * { pointer-events: all; }
-        #sidebar { position: absolute; top: 50%; right: 20px; transform: translateY(-50%); width: 60px; height: 290px; z-index: 100; display: flex; flex-direction: column; justify-content: space-around; align-items: center; padding: 20px 0; }
-        #sidebar::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/rectangle%20horizontal.svg'); background-size: 100% 100%; filter: invert(100%); transform: rotate(90deg); z-index: -1; image-rendering: pixelated; }
-        .sidebar-slot { width: 40px; height: 40px; background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/coin.png'); background-size: contain; background-repeat: no-repeat; background-position: center; filter: grayscale(100%) brightness(50%) opacity(0.5); transition: filter 0.3s ease; image-rendering: pixelated; }
-        .sidebar-slot.captured { filter: grayscale(0%) brightness(100%) opacity(1); }
-        #coin-container { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 150px; height: 150px; z-index: 50; image-rendering: pixelated; }
-        #coin-outline, #coin-fill { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/coin.png'); background-size: contain; background-repeat: no-repeat; background-position: center; }
-        #coin-outline { filter: grayscale(100%) brightness(50%) opacity(0.5); }
-        #coin-fill { clip-path: inset(100% 0 0 0); transition: clip-path 0.5s linear; }
+
+        /* REWRITTEN: Sidebar layout for stability */
+        #sidebar {
+            position: absolute; top: 50%; right: 20px;
+            transform: translateY(-50%);
+            width: 80px; /* Wider to fit frame */
+            height: 320px; /* Taller to fit frame */
+            z-index: 100;
+        }
+        #sidebar-frame {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/rectangle%20horizontal.svg');
+            background-size: 100% 100%;
+            filter: invert(100%);
+            transform: rotate(90deg) scaleY(1.5); /* Stretch vertically */
+            image-rendering: pixelated;
+        }
+        #sidebar-content {
+            position: relative;
+            width: 100%; height: 100%;
+            display: flex; flex-direction: column;
+            justify-content: space-evenly;
+            align-items: center;
+            padding: 15px 0;
+        }
+        .sidebar-slot {
+            width: 40px; height: 40px;
+            background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/coin.png');
+            background-size: contain; background-repeat: no-repeat; background-position: center;
+            filter: grayscale(100%) brightness(50%) opacity(0.5);
+            transition: filter 0.3s ease; image-rendering: pixelated;
+        }
+        .sidebar-slot.captured {
+            filter: grayscale(0%) brightness(100%) opacity(1);
+        }
+        
+        /* REWRITTEN: Coin UI for stability */
+        #coin-container {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 150px; height: 150px;
+            z-index: 50; image-rendering: pixelated;
+        }
+        #coin-outline, #coin-fill {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/coin.png');
+            background-size: contain; background-repeat: no-repeat; background-position: center;
+        }
+        #coin-outline {
+            filter: grayscale(100%) brightness(50%) opacity(0.5);
+        }
+        #coin-fill {
+            clip-path: inset(100% 0 0 0);
+            transition: clip-path 0.5s linear;
+        }
         #coin-container.active #coin-fill { clip-path: inset(0% 0 0 0); }
         #coin-container.active { animation: pulse-rotate 2s infinite; }
-        @keyframes pulse-rotate { 0% { transform: translate(-50%, -50%) scale(1) rotateY(0deg); } 50% { transform: translate(-50%, -50%) scale(1.1) rotateY(180deg); } 100% { transform: translate(-50%, -50%) scale(1) rotateY(360deg); } }
-        #mini-map-container { position: absolute; top: 20px; left: 20px; width: 150px; height: 150px; z-index: 100; transition: all 0.5s ease-in-out; padding: 4px; border: 20px solid transparent; border-image-source: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/circle.png'); border-image-slice: 20; border-image-width: 20px; border-image-repeat: stretch; image-rendering: pixelated; filter: invert(100%); }
-        #mini-map-container-inner { width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); border-radius: 50%; position: relative; overflow: hidden; filter: invert(100%); }
+        @keyframes pulse-rotate {
+            0% { transform: translate(-50%, -50%) scale(1) rotateY(0deg); }
+            50% { transform: translate(-50%, -50%) scale(1.1) rotateY(180deg); }
+            100% { transform: translate(-50%, -50%) scale(1) rotateY(360deg); }
+        }
+
+        /* REWRITTEN: Map UI for stability */
+        #mini-map-container {
+            position: absolute; top: 20px; left: 20px;
+            width: 150px; height: 150px;
+            z-index: 100; transition: all 0.5s ease-in-out;
+        }
+        #mini-map-border {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/circle.png');
+            background-size: contain;
+            filter: invert(100%);
+            image-rendering: pixelated;
+        }
+        #mini-map-container-inner {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: calc(100% - 30px); /* Inner size to fit inside border */
+            height: calc(100% - 30px);
+            background-color: rgba(0,0,0,0.8);
+            border-radius: 50%;
+            overflow: hidden;
+        }
         #mini-map-container.shrunk { width: 100px; height: 100px; }
-        #player-sprite { position: absolute; top: 50%; left: 50%; width: 16px; height: 24px; transform: translate(-50%, -50%) scale(2); background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/mervin.png'); image-rendering: pixelated; z-index: 2; }
+        
+        /* REWRITTEN: Player Sprite CSS for perfect alignment */
+        #player-sprite {
+            position: absolute; top: 50%; left: 50%;
+            width: 16px; height: 24px;
+            transform: translate(-50%, -50%) scale(2);
+            background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/mervin.png');
+            image-rendering: pixelated;
+            z-index: 2;
+        }
+
         #beacon-dot { position: absolute; width: 15px; height: 15px; background-color: #FF0000; border-radius: 50%; border: 2px solid #fff; z-index: 3;}
         #instruction-text { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 90%; max-width: 400px; background-color: rgba(0,0,0,0.8); border: 3px solid #fff; padding: 15px; font-size: 0.8em; opacity: 1; transition: opacity 0.5s ease-in-out; }
         #instruction-text.fade-out { opacity: 0; }
@@ -60,13 +160,17 @@
 
         <div id="game-ui" class="ui-element">
             <div id="sidebar">
-                <div class="sidebar-slot" id="slot-0"></div>
-                <div class="sidebar-slot" id="slot-1"></div>
-                <div class="sidebar-slot" id="slot-2"></div>
-                <div class="sidebar-slot" id="slot-3"></div>
-                <div class="sidebar-slot" id="slot-4"></div>
+                <div id="sidebar-frame"></div>
+                <div id="sidebar-content">
+                    <div class="sidebar-slot" id="slot-0"></div>
+                    <div class="sidebar-slot" id="slot-1"></div>
+                    <div class="sidebar-slot" id="slot-2"></div>
+                    <div class="sidebar-slot" id="slot-3"></div>
+                    <div class="sidebar-slot" id="slot-4"></div>
+                </div>
             </div>
             <div id="mini-map-container">
+                <div id="mini-map-border"></div>
                 <div id="mini-map-container-inner">
                     <div id="player-sprite"></div>
                     <div id="beacon-dot"></div>
@@ -96,38 +200,39 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // DOM Elements
             const playerSprite = document.getElementById('player-sprite');
             const startScreen = document.getElementById('start-screen');
             const startButton = document.getElementById('start-button');
             const gameUi = document.getElementById('game-ui');
             const instructionText = document.getElementById('instruction-text');
-            const arScene = document.getElementById('ar-scene');
-            const arControls = document.getElementById('ar-controls');
-            const activateArButton = document.getElementById('activate-ar-button');
-            const puzzleInputContainer = document.getElementById('puzzle-input-container');
-            const puzzleInput = document.getElementById('puzzle-input');
-            const submitCodeButton = document.getElementById('submit-code-button');
             const miniMap = document.getElementById('mini-map-container');
             const beaconDot = document.getElementById('beacon-dot');
             const coinContainer = document.getElementById('coin-container');
             const coinFill = document.getElementById('coin-fill');
             const sidebarSlots = document.querySelectorAll('.sidebar-slot');
             const feedbackOverlay = document.getElementById('feedback-overlay');
+            const arControls = document.getElementById('ar-controls');
+            const activateArButton = document.getElementById('activate-ar-button');
+            const puzzleInputContainer = document.getElementById('puzzle-input-container');
+            const puzzleInput = document.getElementById('puzzle-input');
+            const submitCodeButton = document.getElementById('submit-code-button');
+            const arScene = document.getElementById('ar-scene');
 
+            // Game State
             const SECRET_CODE = "ORION";
             const targetBeacon = { lat: 32.56043, lon: -97.31519 }; 
             const ACTIVATION_DISTANCE_METERS = 10;
             const MAX_DISTANCE = 100;
             let previousDistance = Infinity;
             let isStationary = true;
-            
             let compassHeading = 0;
-            let instructionTimeout;
             let beaconsCaptured = 0;
-            let beaconBearing = 0;
             let animationFrame = 0;
             let frameCounter = 0;
+            let instructionTimeout;
 
+            // Event Listeners
             startButton.addEventListener('click', startButtonClickHandler);
             activateArButton.addEventListener('click', activateAR);
             submitCodeButton.addEventListener('click', submitCode);
@@ -166,46 +271,34 @@
             }
 
             function updateSpriteAnimation() {
-                // UPDATED: Now maps to 4 directions
                 const direction = getDirectionFromAngle(compassHeading);
                 let row = 0;
-
-                // Maps direction to the correct row on your mervin.png sprite sheet
                 switch(direction) {
-                    case 'S':  row = 0; break; // Walk Down
-                    case 'W':  row = 1; break; // Walk Left
-                    case 'N':  row = 2; break; // Walk Up
-                    case 'E':  row = 3; break; // Walk Right
+                    case 'S':  row = 0; break;
+                    case 'W':  row = 1; break;
+                    case 'N':  row = 2; break;
+                    case 'E':  row = 3; break;
                 }
-
                 let column = isStationary ? 0 : animationFrame;
-                
                 playerSprite.style.backgroundPosition = `-${column * 16}px -${row * 24}px`;
-
                 frameCounter++;
                 if (frameCounter % 4 === 0) {
-                    animationFrame = (animationFrame + 1) % 4; // Your walking animation has 4 frames
+                    animationFrame = (animationFrame + 1) % 4;
                 }
             }
             
-            // UPDATED: Maps 360 degrees to 4 cardinal directions
             function getDirectionFromAngle(angle) {
-                if (angle >= 315 || angle < 45) {
-                    return 'N';
-                } else if (angle >= 45 && angle < 135) {
-                    return 'E';
-                } else if (angle >= 135 && angle < 225) {
-                    return 'S';
-                } else { // 225 to 315
-                    return 'W';
-                }
+                if (angle >= 315 || angle < 45) return 'N';
+                if (angle >= 45 && angle < 135) return 'E';
+                if (angle >= 135 && angle < 225) return 'S';
+                return 'W';
             }
 
             function handlePositionUpdate(position) {
                 const { latitude, longitude } = position.coords;
                 const distance = getDistance(latitude, longitude, targetBeacon.lat, targetBeacon.lon);
 
-                isStationary = Math.abs(distance - previousDistance) < 1;
+                isStationary = Math.abs(distance - previousDistance) < 2;
 
                 feedbackOverlay.className = '';
                 if (!isStationary && distance > ACTIVATION_DISTANCE_METERS) {
@@ -241,14 +334,83 @@
                 updateBeaconDot(latitude, longitude, targetBeacon.lat, targetBeacon.lon);
             }
             
-            async function activateAR() { /* ... no changes ... */ }
+            async function activateAR() {
+                gameUi.style.opacity = '0';
+                arScene.style.visibility = 'visible';
+                const arSystem = arScene.systems["mindar-image-system"];
+                try {
+                    await arSystem.start();
+                } catch (err) { console.error("Error starting AR:", err); }
+            }
+            
             const targetEntity = document.getElementById('target-entity');
-            targetEntity.addEventListener("targetFound", event => { /* ... no changes ... */ });
-            function submitCode() { /* ... no changes ... */ }
-            function updateInstructionText(message, persistent = false) { /* ... no changes ... */ }
-            function updateBeaconDot(playerLat, playerLon, beaconLat, beaconLon) { /* ... no changes ... */ }
-            function getDistance(lat1, lon1, lat2, lon2) { /* ... no changes ... */ }
-            function getBearing(lat1, lon1, lat2, lon2) { /* ... no changes ... */ }
+            targetEntity.addEventListener("targetFound", event => {
+                const arSystem = arScene.systems["mindar-image-system"];
+                arSystem.stop();
+                arScene.style.visibility = 'hidden';
+                gameUi.style.opacity = '1';
+                updateInstructionText("You found a secret code!", true);
+                arControls.style.display = 'none';
+                puzzleInputContainer.style.display = 'block';
+                puzzleInput.focus();
+            });
+
+            function submitCode() {
+                if (puzzleInput.value.toUpperCase() === SECRET_CODE) {
+                    alert("Correct! You've found a beacon!");
+                    if (beaconsCaptured < sidebarSlots.length) {
+                        sidebarSlots[beaconsCaptured].classList.add('captured');
+                    }
+                    beaconsCaptured++;
+
+                    if (beaconsCaptured >= 5) {
+                        alert("Congratulations! You've found all the beacons!");
+                    } else {
+                        puzzleInputContainer.style.display = 'none';
+                        puzzleInput.value = '';
+                        updateInstructionText("Find the next beacon...", true);
+                    }
+                } else {
+                    alert("Incorrect code. Try again!");
+                }
+            }
+
+            function updateInstructionText(message, persistent = false) {
+                instructionText.textContent = message;
+                instructionText.classList.remove('fade-out');
+                if (instructionTimeout) clearTimeout(instructionTimeout);
+                if (!persistent) {
+                    instructionTimeout = setTimeout(() => {
+                        instructionText.classList.add('fade-out');
+                    }, 3000);
+                }
+            }
+
+            function updateBeaconDot(playerLat, playerLon, beaconLat, beaconLon) {
+                const bearing = getBearing(playerLat, playerLon, beaconLat, beaconLon);
+                const angle = bearing * (Math.PI / 180);
+                const mapRadius = miniMap.classList.contains('shrunk') ? 35 : 55;
+                const x = mapRadius * Math.sin(angle);
+                const y = -mapRadius * Math.cos(angle);
+                beaconDot.style.left = `calc(50% + ${x}px - 7.5px)`;
+                beaconDot.style.top = `calc(50% + ${y}px - 7.5px)`;
+            }
+
+            function getDistance(lat1, lon1, lat2, lon2) {
+                const R = 6371e3; const φ1 = lat1 * Math.PI/180; const φ2 = lat2 * Math.PI/180;
+                const Δφ = (lat2-lat1) * Math.PI/180; const Δλ = (lon2-lon1) * Math.PI/180;
+                const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); return R * c;
+            }
+
+            function getBearing(lat1, lon1, lat2, lon2){
+                 const φ1 = lat1 * Math.PI/180; const φ2 = lat2 * Math.PI/180;
+                 const λ1 = lon1 * Math.PI/180; const λ2 = lon2 * Math.PI/180;
+                 const y = Math.sin(λ2-λ1) * Math.cos(φ2);
+                 const x = Math.cos(φ1)*Math.sin(φ2) - Math.sin(φ1)*Math.cos(φ2)*Math.cos(λ2-λ1);
+                 const θ = Math.atan2(y, x);
+                 return (θ * 180 / Math.PI + 360) % 360;
+            }
         });
     </script>
 </body>
