@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Psyde Quest</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
     <style>
         :root {
             --coin-url: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/coin-v1.png');
@@ -65,63 +67,63 @@
         #mini-map { width: 150px; height: 150px; position: relative; }
         #mini-map-border { width: 100%; height: 100%; background-image: var(--map-border-url); background-size: contain; filter: invert(100%); }
         #mini-map-content {
-            position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             width: calc(100% - 30px); height: calc(100% - 30px);
-            background-color: rgba(0,0,0,0.8);
-            border-radius: 50%;
+            background-color: rgba(0,0,0,0.8); border-radius: 50%;
+        }
+        #player-sprite {
+            position: absolute; top: 50%; left: 50%; width: 16px; height: 24px;
+            transform: translate(-50%, -50%) scale(2);
+            background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/new_mervin.png');
         }
 
         #sidebar { width: 80px; height: 320px; position: relative; }
         #sidebar-frame {
-            position: absolute; top: 0; left: 0;
-            width: 100%; height: 100%;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background-image: var(--sidebar-border-url);
             background-size: 100% 100%; filter: invert(100%);
             transform: rotate(90deg) scaleY(1.5);
         }
         #sidebar-content {
-            position: relative;
-            width: 100%; height: 100%;
+            position: relative; width: 100%; height: 100%;
             display: flex; flex-direction: column;
             justify-content: space-evenly; align-items: center;
         }
         .sidebar-slot {
             width: 40px; height: 40px; background-image: var(--coin-url);
-            background-size: contain;
-            filter: grayscale(100%) brightness(50%) opacity(0.5);
+            background-size: contain; filter: grayscale(100%) brightness(50%) opacity(0.5);
         }
-        
+        .sidebar-slot.captured { filter: grayscale(0%) brightness(100%) opacity(1); }
+
+        /* UPDATED: Centering container for coin */
+        #coin-parent-container {
+             width: 600px; height: 600px; position: relative;
+        }
         #coin-container {
-            /* UPDATED: Increased size */
-            width: 600px; height: 600px;
-            position: relative;
-            /* NEW: Added floating animation */
+            width: 100%; height: 100%;
             animation: float 6s ease-in-out infinite;
         }
         #coin-outline, #coin-fill {
-            position: absolute; top: 0; left: 0;
-            width: 100%; height: 100%;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background-image: var(--coin-url);
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
+            background-size: contain; background-repeat: no-repeat; background-position: center;
         }
         #coin-outline { filter: grayscale(100%) brightness(50%) opacity(0.5); }
+        #coin-fill { clip-path: inset(100% 0 0 0); }
         
         #instruction-text {
-            width: 90%; max-width: 400px;
-            background-color: rgba(0,0,0,0.8);
-            border: 3px solid #fff;
-            padding: 15px; font-size: 0.8em;
+            width: 90%; max-width: 400px; background-color: rgba(0,0,0,0.8);
+            border: 3px solid #fff; padding: 15px; font-size: 0.8em;
         }
-
-        /* NEW: Keyframes for the floating animation */
+        
         @keyframes float {
             0% { transform: translateY(0px); }
             50% { transform: translateY(-20px); }
             100% { transform: translateY(0px); }
         }
+
+        #ar-scene { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; visibility: hidden; }
+        #close-ar-button { position: absolute; top: 20px; right: 20px; z-index: 110; width: 40px; height: 40px; font-size: 24px; line-height: 40px; background-color: rgba(0,0,0,0.5); border: 2px solid white; border-radius: 50%; }
         
     </style>
 </head>
@@ -141,38 +143,79 @@
             <div class="ui-row top">
                 <div id="mini-map">
                     <div id="mini-map-border"></div>
-                    <div id="mini-map-content"></div>
+                    <div id="mini-map-content">
+                         <div id="player-sprite"></div>
+                    </div>
                 </div>
-                 <div></div>
+                 <div style="width: 40px; height: 40px;"></div>
             </div>
+
             <div id="center-content">
-                <div id="coin-container">
-                    <div id="coin-outline"></div>
-                    <div id="coin-fill"></div>
+                <div id="coin-parent-container">
+                    <div id="coin-container">
+                        <div id="coin-outline"></div>
+                        <div id="coin-fill"></div>
+                    </div>
                 </div>
             </div>
+
             <div class="ui-row bottom">
                 <div style="width: 80px;"></div>
-                <div id="instruction-text">
-                    Initializing...
-                </div>
+                <div id="instruction-text">Initializing...</div>
                 <div id="sidebar">
                     <div id="sidebar-frame"></div>
                     <div id="sidebar-content">
-                        <div class="sidebar-slot"></div>
-                        <div class="sidebar-slot"></div>
-                        <div class="sidebar-slot"></div>
-                        <div class="sidebar-slot"></div>
-                        <div class="sidebar-slot"></div>
+                        <div class="sidebar-slot"></div> <div class="sidebar-slot"></div> <div class="sidebar-slot"></div>
+                        <div class="sidebar-slot"></div> <div class="sidebar-slot"></div>
                     </div>
                 </div>
             </div>
         </div>
+        
+        <a-scene id="ar-scene" mindar-image="imageTargetSrc: https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.mind; autoStart: false; uiScanning: #none;" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+            </a-scene>
 
     </div>
     <script>
-        // No JavaScript logic in this step.
-        // This is ONLY for confirming the visual layout is 100% correct.
+        document.addEventListener('DOMContentLoaded', () => {
+            const dom = {
+                startScreen: document.getElementById('start-screen'),
+                startButton: document.getElementById('start-button'),
+                gameUi: document.getElementById('game-ui'),
+            };
+
+            const state = {
+                gameStarted: false,
+                // ... other state variables will go here
+            };
+
+            function startGame() {
+                if (state.gameStarted) return;
+                state.gameStarted = true;
+
+                dom.startScreen.classList.add('hidden');
+                dom.gameUi.classList.remove('hidden');
+
+                // We will add all the game logic here in the next steps
+                // (GPS, compass, coin fill, etc.)
+                
+                alert("Game Started! Interactive elements will be added next.");
+            }
+
+            async function startButtonClickHandler() {
+                try {
+                    // A simple user interaction is needed to enable audio/sensors in modern browsers
+                    // We'll request real permissions later. For now, this click is enough.
+                    console.log("Begin button clicked, starting game...");
+                    startGame();
+                } catch (error) {
+                    console.error("Error on start:", error);
+                    alert("Could not start the game.");
+                }
+            }
+
+            dom.startButton.addEventListener('click', startButtonClickHandler);
+        });
     </script>
 </body>
 </html>
