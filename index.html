@@ -93,12 +93,17 @@
             transition: transform 0.1s linear;
         }
         #player-sprite {
-            position: absolute; top: 0; left: 0;
-            width: 16px; height: 24px;
-            transform: translate(-50%, -50%);
-            background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/mervin.png');
-            image-rendering: pixelated;
-        }
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 16px;  /* Width of one frame */
+    height: 24px; /* Height of one frame */
+    transform: translate(-50%, -50%) scale(2);
+    /* Updated to your final file */
+    background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/new_mervin.png');
+    image-rendering: pixelated;
+    z-index: 2;
+}
         #player-fov-cone {
             position: absolute;
             top: -40px; left: 50%;
