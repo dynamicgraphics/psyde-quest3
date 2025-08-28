@@ -18,30 +18,27 @@
         /* --- Start Screen --- */
         #start-screen .start-box { text-align: center; background-color: rgba(0,0,0,0.5); padding: 20px; border-radius: 10px; }
         #start-screen h1 { color: #FFD700; text-shadow: 2px 2px #AA5D00; }
+        /* CORRECTED: Changed image src to coin.png */
         #start-screen img { width: 80px; margin-bottom: 20px; image-rendering: pixelated; }
 
-        /* --- New Flexbox Layout --- */
+        /* --- Game UI --- */
         #game-ui { display: flex; flex-direction: column; justify-content: space-between; width: 100%; height: 100%; pointer-events: none; }
         #top-bar, #bottom-bar { display: flex; justify-content: space-between; align-items: flex-start; width: 100%; padding: 20px; box-sizing: border-box; }
         #bottom-bar { align-items: flex-end; }
         #center-content { flex-grow: 1; display: flex; justify-content: center; align-items: center; }
         #game-ui > * { pointer-events: all; }
 
-        /* --- Map & Settings --- */
         #mini-map { position: relative; width: 150px; height: 150px; transition: all 0.5s ease-in-out; }
         #mini-map.shrunk { width: 100px; height: 100px; }
         #mini-map-border { width: 100%; height: 100%; background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/circle.png'); background-size: contain; filter: invert(100%); image-rendering: pixelated; }
         #mini-map-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: calc(100% - 30px); height: calc(100% - 30px); background-color: rgba(0,0,0,0.8); border-radius: 50%; overflow: hidden; }
         #player-container { position: absolute; top: 50%; left: 50%; width: 1px; height: 1px; transform: translate(-50%, -50%); z-index: 2; }
         #player-sprite { position: absolute; top: 0; left: 0; width: 16px; height: 24px; transform: translate(-50%, -50%) scale(2); background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/new_mervin.png'); image-rendering: pixelated; }
-        #player-fov-cone { position: absolute; top: -40px; left: 50%; transform: translateX(-50%); width: 40px; height: 30px; background: radial-gradient(circle at 50% 0%, rgba(0,150,255,0.4) 0%, rgba(0,150,255,0) 70%); border-radius: 50%; transition: background 0.5s ease; }
-        #player-fov-cone.hot { background: radial-gradient(circle at 50% 0%, rgba(255,0,0,0.5) 0%, rgba(255,0,0,0) 70%); }
         #beacon-dot { position: absolute; width: 16px; height: 16px; z-index: 3; background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAFUlEQVQYV2NkYGD4z4AR/F/yG6gBADtnARMk2c46AAAAAElFTkSuQmCC'); background-size: contain; image-rendering: pixelated; }
 
         #settings-button { font-size: 24px; width: 40px; height: 40px; line-height: 40px; background-color: rgba(0,0,0,0.5); border-radius: 5px; }
         #settings-menu { position: absolute; top: 70px; right: 20px; background-color: rgba(0,0,0,0.8); padding: 10px; border: 3px solid white; }
         
-        /* --- Sidebar & Coin --- */
         #sidebar { position: relative; width: 80px; height: 320px; }
         #sidebar-frame { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/rectangle%20horizontal.svg'); background-size: 100% 100%; filter: invert(100%); transform: rotate(90deg) scaleY(1.5); image-rendering: pixelated; }
         #sidebar-content { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-evenly; align-items: center; }
@@ -121,7 +118,8 @@
                         <button id="submit-code-button">Submit</button>
                     </div>
                  </div>
-                 <div style="width: 80px;"></div> </div>
+                 <div style="width: 80px;"></div>
+            </div>
             <div id="close-ar-button" class="hidden">X</div>
         </div>
         
@@ -137,7 +135,6 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // DOM Elements
             const dom = {
                 startScreen: document.getElementById('start-screen'),
                 startButton: document.getElementById('start-button'),
@@ -155,7 +152,6 @@
                 submitCodeButton: document.getElementById('submit-code-button'),
                 arScene: document.getElementById('ar-scene'),
                 playerSprite: document.getElementById('player-sprite'),
-                playerContainer: document.getElementById('player-container'),
                 closeArButton: document.getElementById('close-ar-button'),
                 music: document.getElementById('background-music'),
                 settingsButton: document.getElementById('settings-button'),
@@ -163,7 +159,6 @@
                 musicToggleButton: document.getElementById('music-toggle-button'),
             };
 
-            // Game State
             const state = {
                 SECRET_CODE: "ORION",
                 targetBeacon: { lat: 32.56043, lon: -97.31519 }, 
@@ -208,8 +203,7 @@
 
             async function startButtonClickHandler() {
                 try {
-                    // This is a user interaction, so we can now safely try to play audio.
-                    dom.music.play().catch(e => console.log("Audio play failed, waiting for another interaction."));
+                    dom.music.play().catch(e => console.log("Audio play failed, will try again after another user interaction."));
                     
                     if (localStorage.getItem('permissionsGranted') !== 'true') {
                          if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
@@ -240,7 +234,6 @@
             }
             
             function gameLoop() {
-                // Sprite Animation
                 const direction = getDirectionFromAngle(state.compassHeading);
                 let row = 0;
                 switch(direction) {
@@ -377,7 +370,6 @@
                  return (θ * 180 / Math.PI + 360) % 360;
             }
             
-            // Initial Load
             loadState();
         });
     </script>
