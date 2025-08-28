@@ -11,11 +11,7 @@
         :root {
             --pixel-border-image: url('data:image/svg+xml;utf8,<?xml version="1.0" encoding="UTF-8" ?><svg version="1.1" width="9" height="9" xmlns="http://www.w3.org/2000/svg"><path d="M3,0 H6 V3 H9 V6 H6 V9 H3 V6 H0 V3 H3 Z" fill-rule="evenodd" fill="white" /></svg>');
         }
-        body, html {
-            margin: 0; padding: 0; width: 100%; height: 100%;
-            overflow: hidden; background-color: #000;
-            font-family: 'Press Start 2P', cursive;
-        }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #000; font-family: 'Press Start 2P', cursive; }
         .hidden { display: none !important; }
         .pixel-border {
             border: 20px solid; border-image-slice: 3; border-image-width: 20px;
@@ -23,7 +19,6 @@
             image-rendering: pixelated;
         }
         
-        /* --- LAYOUT & SCREENS --- */
         #game-container {
             position: relative; width: 100%; height: 100%;
             background: #222 url('https://res.cloudinary.com/dvf40x79k/image/upload/v1708645009/dungeon_tile_bg_y3j86m.png') repeat;
@@ -32,6 +27,8 @@
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; justify-content: center; align-items: center;
         }
+
+        /* --- Start Screen --- */
         #start-screen .start-box {
             width: 90%; max-width: 400px;
             background-color: rgba(0,0,0,0.7);
@@ -40,104 +37,40 @@
         #start-screen h1 { color: #FFD700; text-shadow: 2px 2px #AA5D00; }
         #start-screen img { width: 80px; margin-bottom: 20px; image-rendering: pixelated; }
 
-        #game-ui {
-            display: grid;
-            grid-template-columns: 1fr 2fr 1fr;
-            grid-template-rows: 1fr 2fr 1fr;
-            width: 100%; height: 100%;
-            pointer-events: none;
-        }
+        /* --- Game UI --- */
+        #game-ui { display: grid; grid-template-columns: 1fr auto 1fr; grid-template-rows: 1fr auto 1fr; width: 100%; height: 100%; pointer-events: none; }
         #game-ui > * { pointer-events: all; }
-
-        /* --- UI COMPONENTS --- */
-        #mini-map {
-            grid-column: 1 / 2; grid-row: 1 / 2;
-            position: relative;
-            width: 150px; height: 150px;
-            margin: 20px;
-            transition: all 0.5s ease-in-out;
-        }
+        
+        #mini-map { grid-column: 1 / 2; grid-row: 1 / 2; position: relative; width: 150px; height: 150px; margin: 20px; transition: all 0.5s ease-in-out; }
         #mini-map.shrunk { width: 100px; height: 100px; }
-        #mini-map-border {
-            width: 100%; height: 100%;
-            background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/circle.png');
-            background-size: contain; filter: invert(100%); image-rendering: pixelated;
-        }
-        #mini-map-content {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: calc(100% - 30px); height: calc(100% - 30px);
-            background-color: rgba(0,0,0,0.8); border-radius: 50%; overflow: hidden;
-        }
-        #player-sprite {
-            position: absolute; top: 50%; left: 50%;
-            width: 16px; height: 24px;
-            transform: translate(-50%, -50%) scale(2);
-            background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/new_mervin.png');
-            image-rendering: pixelated; z-index: 2;
-        }
-        #beacon-dot {
-            position: absolute; width: 16px; height: 16px; z-index: 3;
-            background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAFUlEQVQYV2NkYGD4z4AR/F/yG6gBADtnARMk2c46AAAAAElFTkSuQmCC');
-            background-size: contain; image-rendering: pixelated;
-        }
+        #mini-map-border { width: 100%; height: 100%; background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/circle.png'); background-size: contain; filter: invert(100%); image-rendering: pixelated; }
+        #mini-map-content { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: calc(100% - 30px); height: calc(100% - 30px); background-color: rgba(0,0,0,0.8); border-radius: 50%; overflow: hidden; }
+        #player-container { position: absolute; top: 50%; left: 50%; width: 1px; height: 1px; transform: translate(-50%, -50%); z-index: 2; }
+        #player-sprite { position: absolute; top: 0; left: 0; width: 16px; height: 24px; transform: translate(-50%, -50%) scale(2); background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/new_mervin.png'); image-rendering: pixelated; }
+        #beacon-dot { position: absolute; width: 16px; height: 16px; z-index: 3; background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAFUlEQVQYV2NkYGD4z4AR/F/yG6gBADtnARMk2c46AAAAAElFTkSuQmCC'); background-size: contain; image-rendering: pixelated; }
 
-        #sidebar {
-            grid-column: 3 / 4; grid-row: 1 / 4;
-            position: relative;
-            width: 80px; height: 320px;
-            justify-self: end; align-self: center;
-            margin-right: 20px;
-        }
-        #sidebar-frame {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/rectangle%20horizontal.svg');
-            background-size: 100% 100%; filter: invert(100%);
-            transform: rotate(90deg) scaleY(1.5); image-rendering: pixelated;
-        }
-        #sidebar-content {
-            position: relative; width: 100%; height: 100%;
-            display: flex; flex-direction: column; justify-content: space-evenly; align-items: center;
-        }
-        .sidebar-slot {
-            width: 40px; height: 40px;
-            background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/coin.png');
-            background-size: contain; background-repeat: no-repeat; background-position: center;
-            filter: grayscale(100%) brightness(50%) opacity(0.5); image-rendering: pixelated;
-        }
+        #sidebar { grid-column: 3 / 4; grid-row: 1 / 4; position: relative; width: 80px; height: 320px; justify-self: end; align-self: center; margin-right: 20px; }
+        #sidebar-frame { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/rectangle%20horizontal.svg'); background-size: 100% 100%; filter: invert(100%); transform: rotate(90deg) scaleY(1.5); image-rendering: pixelated; }
+        #sidebar-content { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-evenly; align-items: center; }
+        .sidebar-slot { width: 40px; height: 40px; background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/coin.png'); background-size: contain; background-repeat: no-repeat; background-position: center; filter: grayscale(100%) brightness(50%) opacity(0.5); image-rendering: pixelated; }
         .sidebar-slot.captured { filter: grayscale(0%) brightness(100%) opacity(1); }
         
-        #coin-container {
-            grid-column: 2 / 3; grid-row: 2 / 3;
-            position: relative;
-            width: 150px; height: 150px;
-            justify-self: center; align-self: center;
-            image-rendering: pixelated;
-        }
-        #coin-outline, #coin-fill {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/coin.png');
-            background-size: contain; background-repeat: no-repeat; background-position: center;
-        }
+        #coin-container { grid-column: 2 / 3; grid-row: 2 / 3; position: relative; width: 150px; height: 150px; justify-self: center; align-self: center; image-rendering: pixelated; }
+        #coin-outline, #coin-fill { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/coin.png'); background-size: contain; background-repeat: no-repeat; background-position: center; }
         #coin-outline { filter: grayscale(100%) brightness(50%) opacity(0.5); }
         #coin-fill { clip-path: inset(100% 0 0 0); transition: clip-path 0.5s linear; }
         #coin-container.active { animation: pulse-rotate 2s infinite; }
         #coin-container.active #coin-fill { clip-path: inset(0% 0 0 0); }
         @keyframes pulse-rotate { 0% { transform: scale(1) rotateY(0deg); } 50% { transform: scale(1.1) rotateY(180deg); } 100% { transform: scale(1) rotateY(360deg); } }
 
-        #bottom-bar {
-            grid-column: 1 / 4; grid-row: 3 / 4;
-            align-self: end; justify-self: center;
-            width: 100%;
-            padding-bottom: 20px;
-        }
-        #instruction-text {
-            width: 90%; max-width: 400px; background-color: rgba(0,0,0,0.8);
-            border: 3px solid #fff; padding: 15px; font-size: 0.8em; margin: 0 auto 10px auto;
-        }
+        #bottom-bar { grid-column: 1 / 4; grid-row: 3 / 4; align-self: end; justify-self: center; width: 100%; padding-bottom: 20px; }
+        #instruction-text { width: 90%; max-width: 400px; background-color: rgba(0,0,0,0.8); border: 3px solid #fff; padding: 15px; font-size: 0.8em; margin: 0 auto 10px auto; visibility: hidden; }
+        #instruction-text.fade-out { opacity: 0; transition: opacity 0.5s ease-in-out; }
         button { background-color: #555; color: #fff; border: 3px solid #fff; padding: 15px 25px; font-family: 'Press Start 2P', cursive; cursor: pointer; }
         input { font-family: 'Press Start 2P', cursive; padding: 10px; font-size: 1em; }
         
-        #ar-scene { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; visibility: hidden; }
+        #ar-scene { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; visibility: hidden; }
+        #close-ar-button { position: absolute; top: 20px; right: 20px; z-index: 110; width: 40px; height: 40px; font-size: 24px; line-height: 40px; background-color: rgba(0,0,0,0.5); border: 2px solid white; border-radius: 50%; }
     </style>
 </head>
 <body>
@@ -145,10 +78,10 @@
         <div id="feedback-overlay"></div>
 
         <div id="start-screen" class="screen">
-            <div class="start-box">
+            <div class="start-box pixel-border">
                 <img src="https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/coin.png" alt="Quest Coin">
                 <h1>Psyde Quest</h1>
-                <p>An adventure awaits...</p>
+                <p>Your adventure awaits...</p>
                 <button id="start-button">Begin</button>
             </div>
         </div>
@@ -175,7 +108,7 @@
                 <div id="coin-fill"></div>
             </div>
             <div id="bottom-bar">
-                 <p id="instruction-text">Initializing...</p>
+                 <p id="instruction-text"></p>
                  <div id="ar-controls" class="hidden">
                     <button id="activate-ar-button">Activate Camera</button>
                 </div>
@@ -184,6 +117,7 @@
                     <button id="submit-code-button">Submit</button>
                 </div>
             </div>
+            <div id="close-ar-button" class="hidden">X</div>
         </div>
 
         <a-scene id="ar-scene" mindar-image="imageTargetSrc: https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.mind; autoStart: false; uiScanning: #none;" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
@@ -215,7 +149,7 @@
                 submitCodeButton: document.getElementById('submit-code-button'),
                 arScene: document.getElementById('ar-scene'),
                 playerSprite: document.getElementById('player-sprite'),
-                playerContainer: document.getElementById('player-container'),
+                closeArButton: document.getElementById('close-ar-button'),
             };
 
             // Game State
@@ -237,19 +171,45 @@
             dom.startButton.addEventListener('click', startButtonClickHandler);
             dom.activateArButton.addEventListener('click', activateAR);
             dom.submitCodeButton.addEventListener('click', submitCode);
+            dom.closeArButton.addEventListener('click', closeAR);
+            
+            // --- NEW: Save & Load Progress ---
+            function saveProgress() {
+                localStorage.setItem('psydeQuestProgress', JSON.stringify({ beaconsCaptured: state.beaconsCaptured }));
+            }
+
+            function loadProgress() {
+                const savedData = localStorage.getItem('psydeQuestProgress');
+                if (savedData) {
+                    const progress = JSON.parse(savedData);
+                    state.beaconsCaptured = progress.beaconsCaptured || 0;
+                    // Update the UI to reflect loaded progress
+                    for (let i = 0; i < state.beaconsCaptured; i++) {
+                        dom.sidebarSlots[i].classList.add('captured');
+                    }
+                }
+            }
 
             async function startButtonClickHandler() {
                  try {
+                    // We only need to request permissions once.
+                    if (localStorage.getItem('permissionsGranted')) {
+                        startGame();
+                        return;
+                    }
+
                     if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                         const permissionState = await DeviceOrientationEvent.requestPermission();
                         if (permissionState !== 'granted') {
-                            alert("Compass access is required for the mini-map."); return;
+                            alert("Compass access is required."); return;
                         }
                     }
                     if (!('geolocation' in navigator)) {
                         alert("Geolocation is not supported."); return;
                     }
                     await new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }));
+                    
+                    localStorage.setItem('permissionsGranted', 'true');
                     startGame();
                 } catch (error) {
                     console.error("Permission error:", error);
@@ -274,13 +234,10 @@
             
             function gameLoop() {
                 const direction = getDirectionFromAngle(state.compassHeading);
-                
                 let row = 0;
                 switch(direction) {
-                    case 'S': row = 0; break;
-                    case 'W': row = 1; break;
-                    case 'N': row = 2; break;
-                    case 'E': row = 3; break;
+                    case 'S': row = 0; break; case 'W': row = 1; break;
+                    case 'N': row = 2; break; case 'E': row = 3; break;
                 }
                 let column = state.isStationary ? 0 : state.animationFrame;
                 dom.playerSprite.style.backgroundPosition = `-${column * 16}px -${row * 24}px`;
@@ -306,11 +263,8 @@
 
                 dom.feedbackOverlay.className = '';
                 if (!state.isStationary && distance > state.ACTIVATION_DISTANCE_METERS) {
-                    if (distance < state.previousDistance) {
-                        dom.feedbackOverlay.classList.add('pulse-red');
-                    } else {
-                        dom.feedbackOverlay.classList.add('pulse-blue');
-                    }
+                    if (distance < state.previousDistance) dom.feedbackOverlay.classList.add('pulse-red');
+                    else dom.feedbackOverlay.classList.add('pulse-blue');
                 }
                 
                 let fillPercent = 100 - ((distance - state.ACTIVATION_DISTANCE_METERS) / (state.MAX_DISTANCE - state.ACTIVATION_DISTANCE_METERS)) * 100;
@@ -327,11 +281,8 @@
                     dom.miniMap.classList.remove('shrunk');
                     dom.arControls.classList.add('hidden');
                     if (!state.isStationary) {
-                        if (distance < state.previousDistance) {
-                           updateInstructionText("You're getting warmer...");
-                        } else {
-                           updateInstructionText("Getting colder... Turn back!");
-                        }
+                        if (distance < state.previousDistance) updateInstructionText("You're getting warmer...");
+                        else updateInstructionText("Getting colder... Turn back!");
                     }
                 }
                 state.previousDistance = distance;
@@ -341,23 +292,26 @@
             async function activateAR() {
                 dom.gameUi.style.opacity = '0';
                 dom.arScene.style.visibility = 'visible';
-                const arSystem = dom.arScene.systems["mindar-image-system"];
+                dom.closeArButton.classList.remove('hidden');
                 try {
-                    await arSystem.start();
+                    await dom.arScene.systems["mindar-image-system"].start();
                 } catch (err) {
-                    console.error("Error starting AR, falling back:", err);
-                    dom.gameUi.style.opacity = '1';
-                    dom.arScene.style.visibility = 'hidden';
-                    alert("Could not activate camera. Please ensure permissions are enabled in your browser settings.");
+                    console.error("Error starting AR:", err);
+                    closeAR();
+                    alert("Could not activate camera.");
                 }
+            }
+
+            function closeAR() {
+                dom.arScene.systems["mindar-image-system"].stop();
+                dom.arScene.style.visibility = 'hidden';
+                dom.closeArButton.classList.add('hidden');
+                dom.gameUi.style.opacity = '1';
             }
             
             const targetEntity = document.getElementById('target-entity');
-            targetEntity.addEventListener("targetFound", event => {
-                const arSystem = dom.arScene.systems["mindar-image-system"];
-                arSystem.stop();
-                dom.arScene.style.visibility = 'hidden';
-                dom.gameUi.style.opacity = '1';
+            targetEntity.addEventListener("targetFound", () => {
+                closeAR();
                 updateInstructionText("You found a secret code!", true);
                 dom.arControls.classList.add('hidden');
                 dom.puzzleInputContainer.classList.remove('hidden');
@@ -371,6 +325,7 @@
                         dom.sidebarSlots[state.beaconsCaptured].classList.add('captured');
                     }
                     state.beaconsCaptured++;
+                    saveProgress();
 
                     if (state.beaconsCaptured >= 5) {
                         alert("Congratulations! You've found all the beacons!");
@@ -385,12 +340,13 @@
             }
 
             function updateInstructionText(message, persistent = false) {
+                dom.instructionText.style.visibility = 'visible';
+                dom.instructionText.style.opacity = '1';
                 dom.instructionText.textContent = message;
-                dom.instructionText.classList.remove('fade-out');
                 if (state.instructionTimeout) clearTimeout(state.instructionTimeout);
                 if (!persistent) {
                     state.instructionTimeout = setTimeout(() => {
-                        dom.instructionText.classList.add('fade-out');
+                        dom.instructionText.style.opacity = '0';
                     }, 3000);
                 }
             }
@@ -420,6 +376,9 @@
                  const θ = Math.atan2(y, x);
                  return (θ * 180 / Math.PI + 360) % 360;
             }
+            
+            // --- Initial Load ---
+            loadProgress();
         });
     </script>
 </body>
