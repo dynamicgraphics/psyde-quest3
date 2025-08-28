@@ -41,14 +41,30 @@
         #sidebar {
             position: absolute; top: 50%; right: 20px;
             transform: translateY(-50%);
-            display: flex; flex-direction: column;
-            background-color: rgba(0,0,0,0.7);
-            padding: 10px; border: 3px solid #fff;
+            width: 60px; /* Width of the vertical bar */
+            height: 290px; /* Height of the vertical bar */
             z-index: 100;
+            display: flex; flex-direction: column;
+            justify-content: space-around;
+            align-items: center;
+            padding: 20px 0;
+            /* Using a pseudo-element for the rotated background border */
         }
+        #sidebar::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/rectangle%20horizontal.svg');
+            background-size: 100% 100%;
+            filter: invert(100%);
+            transform: rotate(90deg);
+            z-index: -1;
+            image-rendering: pixelated;
+        }
+
         .sidebar-slot {
             width: 40px; height: 40px;
-            margin: 5px 0;
             background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/coin.png');
             background-size: contain; background-repeat: no-repeat; background-position: center;
             filter: grayscale(100%) brightness(50%) opacity(0.5);
@@ -111,30 +127,31 @@
         
         #player-arrow { 
             position: absolute; top: 50%; left: 50%; z-index: 2;
-            width: 0; height: 0; 
+            width: 1px; height: 1px; /* The container is just a rotation point */
             transform: translate(-50%, -50%);
             transition: transform 0.2s linear;
         }
         #player-arrow-img {
-             width: 0; height: 0; 
-             border-left: 8px solid transparent; 
-             border-right: 8px solid transparent; 
-             border-bottom: 24px solid #FFFFFF; 
-             transform: translateY(-40%);
+            position: absolute; top: 0; left: 0;
+            width: 0; height: 0; 
+            border-left: 8px solid transparent; 
+            border-right: 8px solid transparent; 
+            border-bottom: 24px solid #FFFFFF; 
+            transform: translate(-50%, -150%); /* Position tip at the center */
         }
         #player-fov-cone {
             position: absolute;
-            top: -30px;
-            left: 50%;
-            transform: translateX(-50%);
+            top: 0;
+            left: 0;
             width: 80px;
             height: 50px;
-            background: radial-gradient(circle at 50% 100%, rgba(0,150,255,0.4) 0%, rgba(0,150,255,0) 70%);
+            background: radial-gradient(circle at 50% 0%, rgba(0,150,255,0.4) 0%, rgba(0,150,255,0) 70%);
             border-radius: 50%;
+            transform: translate(-50%, -200%); /* Position in front of the arrow tip */
             transition: background 0.5s ease;
         }
         #player-fov-cone.hot {
-            background: radial-gradient(circle at 50% 100%, rgba(255,0,0,0.5) 0%, rgba(255,0,0,0) 70%);
+            background: radial-gradient(circle at 50% 0%, rgba(255,0,0,0.5) 0%, rgba(255,0,0,0) 70%);
         }
 
         #beacon-dot { position: absolute; width: 15px; height: 15px; background-color: #FF0000; border-radius: 50%; border: 2px solid #fff; z-index: 3;}
@@ -220,11 +237,11 @@
             const playerFovCone = document.getElementById('player-fov-cone');
 
             const SECRET_CODE = "ORION";
-            // UPDATED with your new coordinates
             const targetBeacon = { lat: 32.56043, lon: -97.31519 }; 
             const ACTIVATION_DISTANCE_METERS = 10;
             const MAX_DISTANCE = 100;
             let previousDistance = Infinity;
+            let isStationary = true;
             
             let currentArrowAngle = 0;
             let targetArrowAngle = 0;
@@ -259,7 +276,7 @@
                 gameUi.style.display = 'block';
                 updateInstructionText("Follow the red dot on your map.", true);
                 window.addEventListener('deviceorientation', handleOrientation);
-                navigator.geolocation.watchPosition(handlePositionUpdate);
+                navigator.geolocation.watchPosition(handlePositionUpdate, (err) => console.error(err), { enableHighAccuracy: true });
                 requestAnimationFrame(updateArrowRotation);
             }
 
@@ -289,22 +306,16 @@
                 const { latitude, longitude } = position.coords;
                 const distance = getDistance(latitude, longitude, targetBeacon.lat, targetBeacon.lon);
 
-                // UPDATED: More robust pulsing logic
-                if (distance > ACTIVATION_DISTANCE_METERS) {
-                    // Only pulse if there is significant movement
-                    if (Math.abs(distance - previousDistance) > 2) { 
-                        if (distance < previousDistance) {
-                            feedbackOverlay.className = 'pulse-red';
-                        } else {
-                            feedbackOverlay.className = 'pulse-blue';
-                        }
-                    } else {
-                        feedbackOverlay.className = '';
-                    }
-                } else {
-                     feedbackOverlay.className = '';
-                }
+                isStationary = Math.abs(distance - previousDistance) < 2;
 
+                feedbackOverlay.className = '';
+                if (!isStationary && distance > ACTIVATION_DISTANCE_METERS) {
+                    if (distance < previousDistance) {
+                        feedbackOverlay.classList.add('pulse-red');
+                    } else {
+                        feedbackOverlay.classList.add('pulse-blue');
+                    }
+                }
 
                 let fillPercent = 100 - ((distance - ACTIVATION_DISTANCE_METERS) / (MAX_DISTANCE - ACTIVATION_DISTANCE_METERS)) * 100;
                 fillPercent = Math.max(0, Math.min(100, fillPercent));
@@ -319,7 +330,7 @@
                     coinContainer.classList.remove('active');
                     miniMap.classList.remove('shrunk');
                     arControls.style.display = 'none';
-                    if (Math.abs(distance - previousDistance) > 2) {
+                    if (!isStationary) {
                         if (distance < previousDistance) {
                            updateInstructionText("You're getting warmer...");
                         } else {
@@ -411,7 +422,6 @@
                  return (θ * 180 / Math.PI + 360) % 360;
             }
 
-            // UPDATED: More robust lerp function for angles
             function lerpAngle(start, end, amount) {
                 let difference = end - start;
                 if (difference > 180) {
