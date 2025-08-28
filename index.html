@@ -10,15 +10,36 @@
     <style>
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background-color: #000; font-family: 'Press Start 2P', cursive; }
         #game-container { position: relative; width: 100%; height: 100%; background: #222 url('https://res.cloudinary.com/dvf40x79k/image/upload/v1708645009/dungeon_tile_bg_y3j86m.png') repeat; }
+        
+        #feedback-overlay {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 1;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+        #feedback-overlay.pulse-red { animation: pulse-red-anim 2s infinite; }
+        #feedback-overlay.pulse-blue { animation: pulse-blue-anim 2s infinite; }
+        @keyframes pulse-red-anim {
+            0% { opacity: 0; background-color: rgba(255,0,0,0.2); }
+            50% { opacity: 1; background-color: rgba(255,0,0,0.2); }
+            100% { opacity: 0; background-color: rgba(255,0,0,0.2); }
+        }
+        @keyframes pulse-blue-anim {
+            0% { opacity: 0; background-color: rgba(0,0,255,0.2); }
+            50% { opacity: 1; background-color: rgba(0,0,255,0.2); }
+            100% { opacity: 0; background-color: rgba(0,0,255,0.2); }
+        }
+
         .ui-element { position: absolute; z-index: 10; color: #fff; text-align: center; width: 100%; }
         #start-screen { display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; }
-        .start-box { width: 90%; max-width: 400px; background-color: rgba(0,0,0,0.7); padding: 20px; border: 20px solid; border-image-slice: 3; border-image-width: 20px; border-image-repeat: stretch; border-image-source: url('data:image/svg+xml;utf8,<?xml version="1="1" width="9" height="9" xmlns="http://www.w3.org/2000/svg"><path d="M3,0 H6 V3 H9 V6 H6 V9 H3 V6 H0 V3 H3 Z" fill-rule="evenodd" fill="white" /></svg>'); image-rendering: pixelated; }
+        .start-box { width: 90%; max-width: 400px; background-color: rgba(0,0,0,0.7); padding: 20px; border: 20px solid; border-image-slice: 3; border-image-width: 20px; border-image-repeat: stretch; border-image-source: url('data:image/svg+xml;utf8,<?xml version="1.0" encoding="UTF-8" ?><svg version="1.1" width="9" height="9" xmlns="http://www.w3.org/2000/svg"><path d="M3,0 H6 V3 H9 V6 H6 V9 H3 V6 H0 V3 H3 Z" fill-rule="evenodd" fill="white" /></svg>'); image-rendering: pixelated; }
         #game-ui { display: none; width: 100%; height: 100%; opacity: 1; transition: opacity 0.5s; pointer-events: none; }
         #game-ui > * { pointer-events: all; }
 
-        /* UPDATED: Sidebar to the right */
         #sidebar {
-            position: absolute; top: 50%; right: 20px; /* Changed 'left' to 'right' */
+            position: absolute; top: 50%; right: 20px;
             transform: translateY(-50%);
             display: flex; flex-direction: column;
             background-color: rgba(0,0,0,0.7);
@@ -29,12 +50,9 @@
             width: 40px; height: 40px;
             margin: 5px 0;
             background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/coin.png');
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
+            background-size: contain; background-repeat: no-repeat; background-position: center;
             filter: grayscale(100%) brightness(50%) opacity(0.5);
-            transition: filter 0.3s ease;
-            image-rendering: pixelated;
+            transition: filter 0.3s ease; image-rendering: pixelated;
         }
         .sidebar-slot.captured {
             filter: grayscale(0%) brightness(100%) opacity(1);
@@ -44,48 +62,47 @@
             position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%);
             width: 150px; height: 150px;
-            z-index: 50;
-            filter: grayscale(100%) brightness(50%) opacity(0.5);
-            transition: filter 0.5s linear;
-            image-rendering: pixelated;
+            z-index: 50; image-rendering: pixelated;
         }
-        #coin-image {
-            position: absolute; top: 0; left: 0;
-            width: 100%; height: 100%;
+        #coin-outline, #coin-fill {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/coin.png');
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-position: center;
+            background-size: contain; background-repeat: no-repeat; background-position: center;
+        }
+        #coin-outline {
+            filter: grayscale(100%) brightness(50%) opacity(0.5);
+        }
+        #coin-fill {
             clip-path: inset(100% 0 0 0);
             transition: clip-path 0.5s linear;
         }
-        #coin-container.active {
-            filter: grayscale(0%) brightness(100%) opacity(1);
-            animation: pulse-rotate 2s infinite;
+        #coin-container.active #coin-fill {
+            clip-path: inset(0% 0 0 0);
         }
-        #coin-container.active #coin-image {
-             clip-path: inset(0% 0 0 0);
-        }
+        #coin-container.active { animation: pulse-rotate 2s infinite; }
         @keyframes pulse-rotate {
             0% { transform: translate(-50%, -50%) scale(1) rotateY(0deg); }
             50% { transform: translate(-50%, -50%) scale(1.1) rotateY(180deg); }
             100% { transform: translate(-50%, -50%) scale(1) rotateY(360deg); }
         }
 
-        /* UPDATED: Mini-map to the left and new background image */
         #mini-map-container {
-            position: absolute; top: 20px; left: 20px; /* Changed 'right' to 'left' */
+            position: absolute; top: 20px; left: 20px;
             width: 150px; height: 150px;
+            z-index: 100; transition: all 0.5s ease-in-out;
+            padding: 4px; /* Give some space for the border image */
+            border: 20px solid transparent;
+            border-image-source: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/circle.png');
+            border-image-slice: 20;
+            border-image-width: 20px;
+            border-image-repeat: stretch;
+            image-rendering: pixelated;
+        }
+        #mini-map-container-inner {
+            width: 100%; height: 100%;
             background-color: rgba(0,0,0,0.8);
-            border-radius: 50%; /* Still want it circular for placement */
-            z-index: 100;
-            background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/circle.png'); /* NEW MAP IMAGE */
-            background-size: contain; /* Ensure the image fits */
-            background-repeat: no-repeat;
-            background-position: center;
-            image-rendering: pixelated; /* Keeps it sharp */
-            transition: all 0.5s ease-in-out;
-            border: 4px solid #fff; /* Added a border to match the pixel style */
+            border-radius: 50%;
+            position: relative;
         }
         #mini-map-container.shrunk { width: 100px; height: 100px; }
         #player-arrow { position: absolute; top: 50%; left: 50%; width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-bottom: 24px solid #FFFFFF; transform: translate(-50%, -60%); transition: transform 0.2s linear; }
@@ -101,6 +118,8 @@
 </head>
 <body>
     <div id="game-container">
+        <div id="feedback-overlay"></div>
+
         <div id="start-screen" class="ui-element">
             <div class="start-box">
                 <h1>Psyde Quest</h1>
@@ -118,11 +137,14 @@
                 <div class="sidebar-slot" id="slot-4"></div>
             </div>
             <div id="mini-map-container">
-                <div id="player-arrow"></div>
-                <div id="beacon-dot"></div>
+                <div id="mini-map-container-inner">
+                    <div id="player-arrow"></div>
+                    <div id="beacon-dot"></div>
+                </div>
             </div>
             <div id="coin-container">
-                <div id="coin-image"></div>
+                <div id="coin-outline"></div>
+                <div id="coin-fill"></div>
             </div>
             <p id="instruction-text">Initializing...</p>
             <div id="ar-controls">
@@ -158,8 +180,9 @@
             const playerArrow = document.getElementById('player-arrow');
             const beaconDot = document.getElementById('beacon-dot');
             const coinContainer = document.getElementById('coin-container');
-            const coinImage = document.getElementById('coin-image');
+            const coinFill = document.getElementById('coin-fill');
             const sidebarSlots = document.querySelectorAll('.sidebar-slot');
+            const feedbackOverlay = document.getElementById('feedback-overlay');
 
             const SECRET_CODE = "ORION";
             const targetBeacon = { lat: 32.5362, lon: -97.3239 }; 
@@ -217,9 +240,18 @@
                 const { latitude, longitude } = position.coords;
                 const distance = getDistance(latitude, longitude, targetBeacon.lat, targetBeacon.lon);
 
+                feedbackOverlay.className = '';
+                if (distance > ACTIVATION_DISTANCE_METERS) {
+                    if (previousDistance - distance > 1) { // Moved >1m closer
+                        feedbackOverlay.classList.add('pulse-red');
+                    } else if (distance - previousDistance > 1) { // Moved >1m farther
+                        feedbackOverlay.classList.add('pulse-blue');
+                    }
+                }
+
                 let fillPercent = 100 - ((distance - ACTIVATION_DISTANCE_METERS) / (MAX_DISTANCE - ACTIVATION_DISTANCE_METERS)) * 100;
                 fillPercent = Math.max(0, Math.min(100, fillPercent));
-                coinImage.style.clipPath = `inset(${100 - fillPercent}% 0 0 0)`;
+                coinFill.style.clipPath = `inset(${100 - fillPercent}% 0 0 0)`;
 
                 if (distance <= ACTIVATION_DISTANCE_METERS) {
                     coinContainer.classList.add('active');
@@ -297,7 +329,7 @@
             function updateBeaconDot(playerLat, playerLon, beaconLat, beaconLon) {
                 const bearing = getBearing(playerLat, playerLon, beaconLat, beaconLon);
                 const angle = bearing * (Math.PI / 180);
-                const mapRadius = miniMap.classList.contains('shrunk') ? 40 : 65;
+                const mapRadius = miniMap.classList.contains('shrunk') ? 35 : 60; // Adjusted for new border
                 const x = mapRadius * Math.sin(angle);
                 const y = -mapRadius * Math.cos(angle);
                 beaconDot.style.left = `calc(50% + ${x}px - 7.5px)`;
