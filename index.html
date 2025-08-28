@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         :root {
-            --coin-url: url('https://storage.googleapis.com/gemini-prod/images/85611a1d-a077-4402-be5a-4e63f8582772');
+            --coin-url: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/coin-v2.png');
             --map-border-url: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/circle.png');
             --sidebar-border-url: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/rectangle%20horizontal.svg');
             --background-url: url('https://res.cloudinary.com/dvf40x79k/image/upload/v1708645009/dungeon_tile_bg_y3j86m.png');
@@ -46,7 +46,8 @@
         #game-ui {
             position: absolute; top: 0; left: 0;
             width: 100%; height: 100%;
-            display: flex; flex-direction: column;
+            display: flex;
+            flex-direction: column;
             justify-content: space-between;
             pointer-events: none;
         }
@@ -64,20 +65,24 @@
         #mini-map { width: 150px; height: 150px; position: relative; }
         #mini-map-border { width: 100%; height: 100%; background-image: var(--map-border-url); background-size: contain; filter: invert(100%); }
         #mini-map-content {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
             width: calc(100% - 30px); height: calc(100% - 30px);
-            background-color: rgba(0,0,0,0.8); border-radius: 50%;
+            background-color: rgba(0,0,0,0.8);
+            border-radius: 50%;
         }
 
         #sidebar { width: 80px; height: 320px; position: relative; }
         #sidebar-frame {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
             background-image: var(--sidebar-border-url);
             background-size: 100% 100%; filter: invert(100%);
             transform: rotate(90deg) scaleY(1.5);
         }
         #sidebar-content {
-            position: relative; width: 100%; height: 100%;
+            position: relative;
+            width: 100%; height: 100%;
             display: flex; flex-direction: column;
             justify-content: space-evenly; align-items: center;
         }
@@ -102,6 +107,7 @@
             border: 3px solid #fff;
             padding: 15px; font-size: 0.8em;
         }
+        
     </style>
 </head>
 <body>
@@ -109,7 +115,7 @@
         
         <div id="start-screen" class="">
             <div id="start-box" class="">
-                <img src="https://storage.googleapis.com/gemini-prod/images/85611a1d-a077-4402-be5a-4e63f8582772" alt="Quest Coin">
+                <img src="https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/coin-v2.png" alt="Quest Coin">
                 <h1>Psyde Quest</h1>
                 <p>Your adventure awaits...</p>
                 <button id="start-button">Begin</button>
@@ -134,7 +140,9 @@
 
             <div class="ui-row bottom">
                 <div style="width: 80px;"></div>
-                <div id="instruction-text">Initializing...</div>
+                <div id="instruction-text">
+                    Initializing...
+                </div>
                 <div id="sidebar">
                     <div id="sidebar-frame"></div>
                     <div id="sidebar-content">
@@ -152,6 +160,6 @@
     <script>
         // No JavaScript logic in this step.
         // This is ONLY for confirming the visual layout is 100% correct.
-    </pre>
+    </script>
 </body>
 </html>
