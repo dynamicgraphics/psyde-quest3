@@ -220,7 +220,8 @@
             const playerFovCone = document.getElementById('player-fov-cone');
 
             const SECRET_CODE = "ORION";
-            const targetBeacon = { lat: 32.5362, lon: -97.3239 }; 
+            // UPDATED with your new coordinates
+            const targetBeacon = { lat: 32.56043, lon: -97.31519 }; 
             const ACTIVATION_DISTANCE_METERS = 10;
             const MAX_DISTANCE = 100;
             let previousDistance = Infinity;
@@ -237,7 +238,6 @@
 
             async function startButtonClickHandler() {
                 try {
-                    // CORRECTED: Fixed typo in DeviceOrientationEvent
                     if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                         const permissionState = await DeviceOrientationEvent.requestPermission();
                         if (permissionState !== 'granted') {
@@ -250,7 +250,6 @@
                     await new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject));
                     startGame();
                 } catch (error) {
-                    console.error("Permission error:", error);
                     alert("Permissions are required to play. Please refresh and try again.");
                 }
             }
@@ -290,18 +289,22 @@
                 const { latitude, longitude } = position.coords;
                 const distance = getDistance(latitude, longitude, targetBeacon.lat, targetBeacon.lon);
 
-                // CORRECTED: More responsive logic for pulsing
+                // UPDATED: More robust pulsing logic
                 if (distance > ACTIVATION_DISTANCE_METERS) {
-                    if (previousDistance - distance > 1) { // Moved >1m closer
-                        feedbackOverlay.className = 'pulse-red';
-                    } else if (distance - previousDistance > 1) { // Moved >1m farther
-                        feedbackOverlay.className = 'pulse-blue';
+                    // Only pulse if there is significant movement
+                    if (Math.abs(distance - previousDistance) > 2) { 
+                        if (distance < previousDistance) {
+                            feedbackOverlay.className = 'pulse-red';
+                        } else {
+                            feedbackOverlay.className = 'pulse-blue';
+                        }
                     } else {
-                        feedbackOverlay.className = ''; // No significant movement, no pulse
+                        feedbackOverlay.className = '';
                     }
                 } else {
-                     feedbackOverlay.className = ''; // In activation zone, no pulse
+                     feedbackOverlay.className = '';
                 }
+
 
                 let fillPercent = 100 - ((distance - ACTIVATION_DISTANCE_METERS) / (MAX_DISTANCE - ACTIVATION_DISTANCE_METERS)) * 100;
                 fillPercent = Math.max(0, Math.min(100, fillPercent));
@@ -316,10 +319,12 @@
                     coinContainer.classList.remove('active');
                     miniMap.classList.remove('shrunk');
                     arControls.style.display = 'none';
-                    if (previousDistance - distance > 2) {
-                        updateInstructionText("You're getting warmer...");
-                    } else if (distance - previousDistance > 2) {
-                        updateInstructionText("Getting colder... Turn back!");
+                    if (Math.abs(distance - previousDistance) > 2) {
+                        if (distance < previousDistance) {
+                           updateInstructionText("You're getting warmer...");
+                        } else {
+                           updateInstructionText("Getting colder... Turn back!");
+                        }
                     }
                 }
                 previousDistance = distance;
@@ -406,17 +411,15 @@
                  return (θ * 180 / Math.PI + 360) % 360;
             }
 
+            // UPDATED: More robust lerp function for angles
             function lerpAngle(start, end, amount) {
                 let difference = end - start;
-                // Take the shortest path around the circle
                 if (difference > 180) {
                     end -= 360;
                 } else if (difference < -180) {
                     end += 360;
                 }
-                // Standard lerp formula
                 let value = start + (end - start) * amount;
-                // Ensure the result is always positive (0-360)
                 return (value + 360) % 360;
             }
         });
