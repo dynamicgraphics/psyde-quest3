@@ -37,7 +37,10 @@
             padding: 30px; border-radius: 10px;
         }
         #start-screen h1 { color: #FFD700; text-shadow: 2px 2px #AA5D00; font-size: 1.5em; }
-        #start-screen img { width: 80px; margin-bottom: 20px; }
+        #start-screen img {
+            width: 80px; margin-bottom: 20px;
+            animation: float 6s ease-in-out infinite; /* Floating animation */
+        }
         #start-screen p { font-size: 0.8em; margin: 20px 0; }
         button {
             background-color: #555; color: #fff; border: 3px solid #fff;
@@ -67,67 +70,77 @@
         #mini-map { width: 150px; height: 150px; position: relative; }
         #mini-map-border { width: 100%; height: 100%; background-image: var(--map-border-url); background-size: contain; filter: invert(100%); }
         #mini-map-content {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
             width: calc(100% - 30px); height: calc(100% - 30px);
-            background-color: rgba(0,0,0,0.8); border-radius: 50%;
-        }
-        #player-sprite {
-            position: absolute; top: 50%; left: 50%; width: 16px; height: 24px;
-            transform: translate(-50%, -50%) scale(2);
-            background-image: url('https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/new_mervin.png');
+            background-color: rgba(0,0,0,0.8);
+            border-radius: 50%;
         }
 
         #sidebar { width: 80px; height: 320px; position: relative; }
         #sidebar-frame {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
             background-image: var(--sidebar-border-url);
             background-size: 100% 100%; filter: invert(100%);
             transform: rotate(90deg) scaleY(1.5);
         }
         #sidebar-content {
-            position: relative; width: 100%; height: 100%;
+            position: relative;
+            width: 100%; height: 100%;
             display: flex; flex-direction: column;
             justify-content: space-evenly; align-items: center;
         }
         .sidebar-slot {
             width: 40px; height: 40px; background-image: var(--coin-url);
-            background-size: contain; filter: grayscale(100%) brightness(50%) opacity(0.5);
+            background-size: contain;
+            filter: grayscale(100%) brightness(50%) opacity(0.5);
         }
         .sidebar-slot.captured { filter: grayscale(0%) brightness(100%) opacity(1); }
-
-        /* UPDATED: Centering container for coin */
-        #coin-parent-container {
-             width: 600px; height: 600px; position: relative;
-        }
+        
         #coin-container {
-            width: 100%; height: 100%;
-            animation: float 6s ease-in-out infinite;
+            width: 300px; height: 300px; /* Resized */
+            position: relative;
         }
         #coin-outline, #coin-fill {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
             background-image: var(--coin-url);
-            background-size: contain; background-repeat: no-repeat; background-position: center;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
         }
         #coin-outline { filter: grayscale(100%) brightness(50%) opacity(0.5); }
-        #coin-fill { clip-path: inset(100% 0 0 0); }
-        
+        #coin-fill { clip-path: inset(100% 0 0 0); transition: clip-path 0.2s linear; }
+        #coin-container.active { animation: active-pulse 2s infinite; }
+        #coin-container.active #coin-fill { clip-path: inset(0% 0 0 0); }
+
         #instruction-text {
-            width: 90%; max-width: 400px; background-color: rgba(0,0,0,0.8);
-            border: 3px solid #fff; padding: 15px; font-size: 0.8em;
+            width: 90%; max-width: 400px;
+            background-color: rgba(0,0,0,0.8);
+            border: 3px solid #fff;
+            padding: 15px; font-size: 0.8em;
         }
         
         @keyframes float {
             0% { transform: translateY(0px); }
-            50% { transform: translateY(-20px); }
+            50% { transform: translateY(-10px); }
             100% { transform: translateY(0px); }
+        }
+        @keyframes active-pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
         }
 
         #ar-scene { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; visibility: hidden; }
         #close-ar-button { position: absolute; top: 20px; right: 20px; z-index: 110; width: 40px; height: 40px; font-size: 24px; line-height: 40px; background-color: rgba(0,0,0,0.5); border: 2px solid white; border-radius: 50%; }
-        
+
     </style>
 </head>
 <body>
+    <audio id="background-music" loop src="https://cdn.jsdelivr.net/gh/dynamicgraphics/psyde-quest3@main/Psydequest_Main.mp3"></audio>
+
     <div id="game-container">
         
         <div id="start-screen" class="">
@@ -143,75 +156,122 @@
             <div class="ui-row top">
                 <div id="mini-map">
                     <div id="mini-map-border"></div>
-                    <div id="mini-map-content">
-                         <div id="player-sprite"></div>
-                    </div>
+                    <div id="mini-map-content"></div>
                 </div>
-                 <div style="width: 40px; height: 40px;"></div>
+                 <div></div>
             </div>
-
             <div id="center-content">
-                <div id="coin-parent-container">
-                    <div id="coin-container">
-                        <div id="coin-outline"></div>
-                        <div id="coin-fill"></div>
-                    </div>
+                <div id="coin-container">
+                    <div id="coin-outline"></div>
+                    <div id="coin-fill"></div>
                 </div>
             </div>
-
             <div class="ui-row bottom">
                 <div style="width: 80px;"></div>
                 <div id="instruction-text">Initializing...</div>
                 <div id="sidebar">
                     <div id="sidebar-frame"></div>
                     <div id="sidebar-content">
-                        <div class="sidebar-slot"></div> <div class="sidebar-slot"></div> <div class="sidebar-slot"></div>
-                        <div class="sidebar-slot"></div> <div class="sidebar-slot"></div>
+                        <div class="sidebar-slot"></div><div class="sidebar-slot"></div><div class="sidebar-slot"></div>
+                        <div class="sidebar-slot"></div><div class="sidebar-slot"></div>
                     </div>
                 </div>
             </div>
         </div>
-        
+
         <a-scene id="ar-scene" mindar-image="imageTargetSrc: https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.mind; autoStart: false; uiScanning: #none;" vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
             </a-scene>
-
     </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const dom = {
                 startScreen: document.getElementById('start-screen'),
                 startButton: document.getElementById('start-button'),
                 gameUi: document.getElementById('game-ui'),
+                music: document.getElementById('background-music'),
+                coinContainer: document.getElementById('coin-container'),
+                coinFill: document.getElementById('coin-fill'),
+                instructionText: document.getElementById('instruction-text'),
+                arControls: document.createElement('div'), // Will be added dynamically
             };
+            
+            // Web Audio API State
+            let audioContext;
+            let analyser;
+            let frequencyData;
+            const TARGET_FREQUENCY = 40000;
+            const ACTIVATION_THRESHOLD = 80;
+            const MAX_SIGNAL = 180;
 
-            const state = {
-                gameStarted: false,
-                // ... other state variables will go here
-            };
-
-            function startGame() {
-                if (state.gameStarted) return;
-                state.gameStarted = true;
-
-                dom.startScreen.classList.add('hidden');
-                dom.gameUi.classList.remove('hidden');
-
-                // We will add all the game logic here in the next steps
-                // (GPS, compass, coin fill, etc.)
-                
-                alert("Game Started! Interactive elements will be added next.");
-            }
+            let gameInterval = null;
 
             async function startButtonClickHandler() {
                 try {
-                    // A simple user interaction is needed to enable audio/sensors in modern browsers
-                    // We'll request real permissions later. For now, this click is enough.
-                    console.log("Begin button clicked, starting game...");
+                    // This is a user interaction, so we can now safely start audio.
+                    await initializeAudio();
+                    
+                    // Request other permissions
+                    if (!('geolocation' in navigator)) {
+                        alert("GPS is not supported on this device."); return;
+                    }
+                    await new Promise((resolve, reject) => navigator.geolocation.getCurrentPosition(resolve, reject));
+
                     startGame();
                 } catch (error) {
-                    console.error("Error on start:", error);
-                    alert("Could not start the game.");
+                    console.error("Permission error:", error);
+                    alert("This game requires Microphone and GPS permissions to play. Please allow access and refresh the page.");
                 }
+            }
+
+            async function initializeAudio() {
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    const microphone = audioContext.createMediaStreamSource(stream);
+                    analyser = audioContext.createAnalyser();
+                    analyser.fftSize = 8192;
+                    frequencyData = new Uint8Array(analyser.frequencyBinCount);
+                    microphone.connect(analyser);
+                }
+                if (audioContext.state === 'suspended') {
+                    await audioContext.resume();
+                }
+                dom.music.play();
+            }
+
+            function startGame() {
+                dom.startScreen.classList.add('hidden');
+                dom.gameUi.classList.remove('hidden');
+                dom.music.pause(); // Stop intro music
+                dom.music.currentTime = 0;
+                updateInstructionText("Listen for the beacon's signal...");
+                gameInterval = setInterval(gameLoop, 100);
+            }
+
+            function gameLoop() {
+                if (!analyser) return;
+
+                analyser.getByteFrequencyData(frequencyData);
+                const targetBin = Math.round(TARGET_FREQUENCY / (audioContext.sampleRate / analyser.fftSize));
+                const signalStrength = frequencyData[targetBin] || 0;
+
+                let fillPercent = (signalStrength / MAX_SIGNAL) * 100;
+                fillPercent = Math.max(0, Math.min(100, fillPercent));
+                dom.coinFill.style.clipPath = `inset(${100 - fillPercent}% 0 0 0)`;
+
+                if (signalStrength > ACTIVATION_THRESHOLD) {
+                    dom.coinContainer.classList.add('active');
+                    updateInstructionText("Signal strong! A rune is nearby.");
+                    // In a real game, you would show the AR button here
+                } else {
+                    dom.coinContainer.classList.remove('active');
+                    updateInstructionText("Listen for the beacon's signal...");
+                }
+            }
+            
+            function updateInstructionText(message) {
+                dom.instructionText.textContent = message;
             }
 
             dom.startButton.addEventListener('click', startButtonClickHandler);
