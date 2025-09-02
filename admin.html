@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Psyde Quest Admin Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .beacon { border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Beacon Status</h1>
+    <div id="beacon-list"></div>
+
+    <script>
+        async function fetchBeaconStatus() {
+            try {
+                const response = await fetch('/admin/status');
+                const data = await response.json();
+                const beaconListDiv = document.getElementById('beacon-list');
+                beaconListDiv.innerHTML = ''; // Clear previous list
+
+                for (const id in data) {
+                    const beacon = data[id];
+                    const lastSeen = new Date(beacon.last_seen * 1000).toLocaleString();
+                    const statusClass = (Date.now() / 1000 - beacon.last_seen) > 60 ? 'offline' : 'online';
+
+                    const beaconDiv = document.createElement('div');
+                    beaconDiv.className = 'beacon ' + statusClass;
+                    beaconDiv.innerHTML = `
+                        <strong>Beacon ID:</strong> ${id}<br>
+                        <strong>Last Seen:</strong> ${lastSeen}
+                    `;
+                    beaconListDiv.appendChild(beaconDiv);
+                }
+            } catch (error) {
+                console.error('Error fetching beacon status:', error);
+            }
+        }
+        setInterval(fetchBeaconStatus, 3000); // Fetch status every 3 seconds
+        fetchBeaconStatus(); // Initial fetch
+    </script>
+</body>
+</html>
