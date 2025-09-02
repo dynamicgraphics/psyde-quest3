@@ -3,8 +3,13 @@
 <head>
     <title>Psyde Quest Admin Dashboard</title>
     <style>
-        body { font-family: Arial, sans-serif; }
-        .beacon { border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; }
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .beacon { border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; border-radius: 5px; }
+        .beacon.online { border-color: green; }
+        .beacon.offline { border-color: red; }
+        .status { font-weight: bold; }
+        .online-status { color: green; }
+        .offline-status { color: red; }
     </style>
 </head>
 <body>
@@ -19,16 +24,24 @@
                 const beaconListDiv = document.getElementById('beacon-list');
                 beaconListDiv.innerHTML = ''; // Clear previous list
 
+                if (Object.keys(data).length === 0) {
+                    beaconListDiv.innerHTML = 'No beacons connected yet.';
+                    return;
+                }
+
                 for (const id in data) {
                     const beacon = data[id];
                     const lastSeen = new Date(beacon.last_seen * 1000).toLocaleString();
-                    const statusClass = (Date.now() / 1000 - beacon.last_seen) > 60 ? 'offline' : 'online';
+                    const isOnline = (Date.now() / 1000 - beacon.last_seen) < 60; // 60 seconds
+                    const statusText = isOnline ? 'Online' : 'Offline';
+                    const statusClass = isOnline ? 'online-status' : 'offline-status';
 
                     const beaconDiv = document.createElement('div');
-                    beaconDiv.className = 'beacon ' + statusClass;
+                    beaconDiv.className = 'beacon';
                     beaconDiv.innerHTML = `
                         <strong>Beacon ID:</strong> ${id}<br>
-                        <strong>Last Seen:</strong> ${lastSeen}
+                        <strong>Last Seen:</strong> ${lastSeen}<br>
+                        <strong>Status:</strong> <span class="${statusClass}">${statusText}</span>
                     `;
                     beaconListDiv.appendChild(beaconDiv);
                 }
@@ -36,6 +49,7 @@
                 console.error('Error fetching beacon status:', error);
             }
         }
+        
         setInterval(fetchBeaconStatus, 3000); // Fetch status every 3 seconds
         fetchBeaconStatus(); // Initial fetch
     </script>
