@@ -129,79 +129,100 @@
                 qrCode: document.getElementById('qr-code'),
             };
 
+            // --- NEW: BLE Game Constants ---
+            const MIN_RSSI = -100; // Signal is very weak
+            const MAX_RSSI = -45;  // Signal is very strong
+            const ACTIVATION_THRESHOLD = -55; // RSSI value needed to win
+
             // Game State
             const state = {
                 gameInterval: null,
+                bleDevice: null,
+                lastRssi: MIN_RSSI, // Start with the weakest signal
             };
             
-            // Web Audio API State
-            let audioContext;
-            let analyser;
-            let frequencyData;
-            const TARGET_FREQUENCY = 1000; // Using an AUDIBLE test frequency
-            const ACTIVATION_THRESHOLD = 120; // Signal strength (0-255) to win
-            const MAX_SIGNAL = 200;
-
+            // --- MODIFIED: The start button now initializes Bluetooth ---
             async function startButtonClickHandler() {
                 try {
-                    await initializeAudio();
+                    await initializeBluetooth();
                     startGame();
                 } catch (error) {
-                    console.error("Permission or Audio error:", error);
-                    alert("This game requires Microphone access to play. Please allow access and refresh the page.");
+                    console.error("Bluetooth Error:", error);
+                    alert("This game requires Bluetooth to play. Please allow access and make sure it's enabled.");
                 }
             }
 
-            async function initializeAudio() {
-                if (!audioContext) {
-                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    const microphone = audioContext.createMediaStreamSource(stream);
-                    analyser = audioContext.createAnalyser();
-                    analyser.fftSize = 8192;
-                    frequencyData = new Uint8Array(analyser.frequencyBinCount);
-                    microphone.connect(analyser);
+            // --- NEW: Function to initialize Web Bluetooth ---
+            async function initializeBluetooth() {
+                updateInstructionText("Requesting Bluetooth access...");
+                if (!navigator.bluetooth) {
+                    throw new Error('Web Bluetooth API is not available in this browser!');
                 }
-                if (audioContext.state === 'suspended') {
-                    await audioContext.resume();
-                }
+
+                // Scan for the ESP32 beacon
+                const device = await navigator.bluetooth.requestDevice({
+                    filters: [{ name: 'PsydeQuest_Beacon' }], // IMPORTANT: Match this name in your ESP32 code
+                    optionalServices: [], // Add any services you might need later
+                });
+
+                state.bleDevice = device;
+                
+                // Set up a listener for disconnection
+                device.addEventListener('gattserverdisconnected', onDisconnected);
+                
+                updateInstructionText("Connecting to beacon...");
+                const server = await device.gatt.connect();
+                console.log('Connected to', server.device.name);
+
+                // Start watching for advertisement packets to get RSSI
+                await device.watchAdvertisements();
+                device.addEventListener('advertisementreceived', (event) => {
+                    // event.rssi contains the signal strength
+                    state.lastRssi = event.rssi;
+                });
+            }
+
+            function onDisconnected() {
+                alert("Beacon disconnected! Please restart the game.");
+                clearInterval(state.gameInterval);
+                // Optionally, reset the UI to the start screen
+                window.location.reload();
             }
 
             function startGame() {
                 dom.startScreen.classList.add('hidden');
                 dom.gameUi.classList.remove('hidden');
-                updateInstructionText("Listen for the beacon's signal...");
-                state.gameInterval = setInterval(gameLoop, 100);
+                updateInstructionText("Search for the beacon's signal...");
+                // Start the game loop to update the UI
+                state.gameInterval = setInterval(gameLoop, 250); // Update UI 4 times a second
             }
 
+            // --- MODIFIED: Game loop now uses RSSI from Bluetooth ---
             function gameLoop() {
-                if (!analyser) return;
+                if (!state.bleDevice) return;
 
-                analyser.getByteFrequencyData(frequencyData);
-                const targetBin = Math.round(TARGET_FREQUENCY / (audioContext.sampleRate / analyser.fftSize));
-                const signalStrength = frequencyData[targetBin] || 0;
+                const rssi = state.lastRssi;
 
-                let fillPercent = (signalStrength / MAX_SIGNAL) * 100;
-                fillPercent = Math.max(0, Math.min(100, fillPercent));
+                // Convert RSSI to a 0-100 percentage for the meter
+                let fillPercent = 100 * (rssi - MIN_RSSI) / (MAX_RSSI - MIN_RSSI);
+                fillPercent = Math.max(0, Math.min(100, fillPercent)); // Clamp between 0 and 100
+                
+                // Update the coin fill UI
                 dom.coinFill.style.clipPath = `inset(${100 - fillPercent}% 0 0 0)`;
 
-                if (signalStrength > ACTIVATION_THRESHOLD) {
+                // Check for victory condition
+                if (rssi > ACTIVATION_THRESHOLD) {
                     dom.coinContainer.classList.add('active');
-                    updateInstructionText("Signal strong! Beacon found!");
-                    
-                    // --- VICTORY ---
-                    // Stop the game loop
+                    updateInstructionText("Signal strong! You found it!");
                     clearInterval(state.gameInterval);
-                    // Show victory screen
-                    showVictory();
+                    setTimeout(showVictory, 1000); // Wait a second before showing victory screen
                 } else {
                     dom.coinContainer.classList.remove('active');
-                    updateInstructionText("Listen for the beacon's signal...");
+                    updateInstructionText("Searching for the beacon's signal...");
                 }
             }
 
             function showVictory() {
-                // Generate a unique QR code for the prize
                 const prizeCode = `PsydeQuest-Winner-${Date.now()}`;
                 dom.qrCode.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(prizeCode)}`;
                 
